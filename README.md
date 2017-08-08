@@ -1,12 +1,13 @@
 # motionPlanning
 
-Include motion planner:
-1.BEAST
-2.ATEMPTS
+#Include motion planner:
+1. BEAST
+2. ATEMPTS
 
-Usage:
+#Usage:
+'''
 mkdir build
 cd build
 cmake..
 make
-
+'''
