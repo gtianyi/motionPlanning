@@ -5,9 +5,10 @@
 2. ATEMPTS
 
 #Usage:
-'''
+```
+
 mkdir build
 cd build
 cmake..
 make
-'''
+```
