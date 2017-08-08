@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11  -g   CMakeFiles/MoreMotionPlanning.dir/main.cpp.o  -o MoreMotionPlanning -rdynamic /usr/local/lib/libompl.so -lassimp -lfcl -Wl,-Bstatic -lboost_system -Wl,-Bdynamic -llapack -lblas -Wl,-rpath,/usr/local/lib 

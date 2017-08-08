@@ -1,0 +1,74 @@
+#This is how long the planner is allowed to run
+Timeout ? 60
+
+#This is how much memory the planner is allowed to use (MB)
+Memory ? 1000
+
+#This is the seed used to initialize the random number generator
+Seed ? 1
+
+#This is how many runs will be executed -- the way I have things set up it'll always be 1
+Runs ? 1
+
+#This is the filename where you want the results to be stored
+Output ? outfile
+
+#This is an OMPL parameter for using intermediate states when propagating, you'll almost always want this to be true
+AddIntermediateStates ? true
+
+#Some of the planners accept a goal bias parameter, in this case we've specified RRT which uses this paramter
+GoalBias ? 0.05
+
+#This is the propagation step size used when forward simulating the system, it has a serious impact on collisions if set to high
+PropagationStepSize ? 0.05
+
+#This is basically, for each propagation what is the minimum and maximum number of unit propagations to do
+MinControlDuration ? 1
+MaxControlDuration ? 100
+
+#If there is not a controller that can be used for steering, we generate this many random controls and take the one that gets closest to the target
+NumControls ? 10
+
+
+#This is the motion model we're using
+Domain ? DynamicCar
+
+#This is the agent mesh used to represent the agent (for collision checking)
+AgentMesh ? car2_planar_robot.dae
+
+#This is the mesh used for the environment
+EnvironmentMesh ? forest.dae
+
+#In a lot of our planners we need environment bounds to create an abstraction
+EnvironmentBounds ? -30 30 -30 30
+
+#The kinematic car is a planar vehicle, so we set a start x,y for it (we don't play with the orientation but it can be done)
+Start ? 3 -5
+
+#The goal location
+Goal ? 0 -25
+
+#In our experiments we are focused on getting spatially close to the goal so this signifies the radius in x,y or x,y,z around the goal that is acceptable
+GoalRadius ? 1
+
+#Finally the planner to be used
+Planner ? BEAST
+
+#Beast which search
+WhichSearch ? D*
+
+StateRadius ? 6
+
+PRMSize ? 1000
+
+NumEdges ? 5
+
+ValidEdgeDistributionAlpha ? 10
+
+ValidEdgeDistributionBeta ? 1
+
+InvalidEdgeDistributionAlpha ? 1
+
+InvalidEdgeDistributionBeta ? 10
+
+
