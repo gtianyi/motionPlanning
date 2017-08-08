@@ -2,7 +2,8 @@
 
 ## Include motion planner:
 1. BEAST
-2. ATEMPTS
+2. B-SST
+3. ATEMPTS
 
 ## Usage:
 ```
