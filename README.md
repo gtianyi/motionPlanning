@@ -1,12 +1,11 @@
-# motionPlanning
+# Greetings! Welcome to my motion planning repository!
 
-#Include motion planner:
+## Include motion planner:
 1. BEAST
 2. ATEMPTS
 
-#Usage:
+## Usage:
 ```
-
 mkdir build
 cd build
 cmake..
