@@ -11,4 +11,5 @@ mkdir build
 cd build
 cmake..
 make
+./MotionPlanning problemSetting.inst
 ```

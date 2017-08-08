@@ -1,18 +1,18 @@
 cmake_minimum_required (VERSION 2.6)
-project (MoreMotionPlanning)
+project (MotionPlanning)
 
 set(CMAKE_MODULE_PATH
     "${CMAKE_MODULE_PATH}"
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
-#set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3")
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3")
+#set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g")
 
 
 #add_library(OMPL STATIC IMPORTED)
-add_executable(MoreMotionPlanning main.cpp)
+add_executable(MotionPlanning main.cpp)
 
-target_compile_definitions(MoreMotionPlanning PRIVATE IKFAST_NO_MAIN)
+target_compile_definitions(MotionPlanning PRIVATE IKFAST_NO_MAIN)
 #target_compile_definitions(MoreMotionPlanning PRIVATE STREAM_GRAPHICS IKFAST_NO_MAIN)
 
 find_package(OMPL REQUIRED)
@@ -35,7 +35,7 @@ include_directories(
 
 
 
-target_link_libraries(MoreMotionPlanning
+target_link_libraries(MotionPlanning
 	${OMPL_LIBRARIES}
 	${OMPLAPP_LIBRARIES}
 	${ASSIMP_LIBRARIES}
