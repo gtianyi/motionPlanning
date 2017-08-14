@@ -43,6 +43,7 @@ GlobalParameters globalParameters;
 #include "planners/restartingrrtwithpruning.hpp"
 #include "planners/anytimebeastplanner.hpp"
 #include "planners/anytimebeastcostplanner.hpp"
+#include "planners/anytimebeastplannernew.hpp"
 
 
 void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
@@ -87,7 +88,9 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else if(planner.compare("AnytimeBEASTCost") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastCostPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
-  }else {
+  } else if(planner.compare("AnytimeBEASTnew") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
+  } else {
     fprintf(stderr, "unrecognized planner\n");
     return;
   }
@@ -113,17 +116,17 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
 
   // If there were multiple solutions being logged to global parameters, append them to the output file
   // for some reason the OMPL benchmarking doesn't include all the solutions added, just the final one
-  // if(globalParameters.solutionStream.solutions.size() > 0) {
-  //   std::ofstream outfile;
-  //   outfile.open(params.stringVal("Output").c_str(), std::ios_base::app);
+  if(globalParameters.solutionStream.solutions.size() > 0) {
+    std::ofstream outfile;
+    outfile.open(params.stringVal("Output").c_str(), std::ios_base::app);
 
-  //   outfile << "Solution Stream\n";
+    outfile << "Solution Stream\n";
 
-  //   for(const auto &solution : globalParameters.solutionStream.solutions) {
-  //     outfile << solution.second << " " << solution.first.value() << "\n";
-  //   }
-  //   outfile.close();
-  // }	
+    for(const auto &solution : globalParameters.solutionStream.solutions) {
+      outfile << solution.second << " " << solution.first.value() << "\n";
+    }
+    outfile.close();
+  }	
 }
 
 int main(int argc, char *argv[]) {

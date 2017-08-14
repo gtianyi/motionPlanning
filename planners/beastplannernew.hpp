@@ -9,6 +9,7 @@
 
 #include "../samplers/beastsampler_dstar.hpp"
 #include "../samplers/beastsampler_dijkstra.hpp"
+#include "../samplers/beastsampler_dstarDis.hpp"
 #include <limits>
 
 namespace ompl {
@@ -99,6 +100,9 @@ class BeastPlannernew : public ompl::control::RRT {
             } else if(whichSearch.compare("Dijkstra") == 0) {
                 newsampler_ = new ompl::base::BeastSampler_dijkstra((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
                                                                     goal_s, params);
+            } else if(whichSearch.compare("D*Dis") == 0) {
+                newsampler_ = new ompl::base::BeastSampler_dstarDis((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
+                                                                    goal_s, params);
             } else {
                 throw ompl::Exception("Unrecognized best first search type", whichSearch.c_str());
             }
@@ -137,21 +141,21 @@ class BeastPlannernew : public ompl::control::RRT {
             // else {
             newsampler_->sample(resusableMotion->state, rstate);
             /* find closest state in the tree */
-             // nmotion = nn_->nearest(rmotion);
-            std::cout << "from state ============ " << std::endl;
-            // si_->printState(resusableMotion->state, std::cout);
-            auto s = resusableMotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
-            std::cout << s->getX() << " " << s->getY() << std::endl;
-            std::cout << "rstate ============ " << std::endl;
-            // si_->printState(rstate, std::cout);
-            s = rstate->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
-            std::cout << s->getX() << " " << s->getY() << std::endl;
+            // nmotion = nn_->nearest(rmotion);
+            // std::cout << "from state ============ " << std::endl;
+            // // si_->printState(resusableMotion->state, std::cout);
+            // auto s = resusableMotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
+            // std::cout << s->getX() << " " << s->getY() << std::endl;
+            // std::cout << "rstate ============ " << std::endl;
+            // // si_->printState(rstate, std::cout);
+            // s = rstate->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
+            // std::cout << s->getX() << " " << s->getY() << std::endl;
             
             nmotion= nn_->nearest(resusableMotion);
-            std::cout << "nearest state ============ " << std::endl;
+            // std::cout << "nearest state ============ " << std::endl;
             // si_->printState(nmotion->state, std::cout);
-            s = nmotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
-            std::cout << s->getX() << " " << s->getY() << std::endl;
+            // s = nmotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
+            // std::cout << s->getX() << " " << s->getY() << std::endl;
             // }
 
 #ifdef STREAM_GRAPHICS
