@@ -15,5 +15,5 @@ make
 ```
 
 ## OMPL:
-For compile the program, you need to install OMPL first:
+To compile the program, you need to install OMPL first:
 http://ompl.kavrakilab.org/download.html
