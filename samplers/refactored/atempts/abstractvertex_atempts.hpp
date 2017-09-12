@@ -1,3 +1,11 @@
+/**
+ * \file abstractvertex_atemtps.hpp
+ *
+ * vertex object
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */ 
 #pragma once
 
 namespace ompl {

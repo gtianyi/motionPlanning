@@ -1,3 +1,12 @@
+/**
+ * \file atemtpsdijkstra.hpp
+ *
+ * compute pareto frontier trade-off curve for every vetex
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */ 
+
 #pragma once
 
 #include "abstractvertexOps.hpp"
@@ -16,19 +25,13 @@ class AtemptsDijkstra {
   public:
     AtemptsDijkstra(std::vector<Vertex> &baseVertices, unsigned int startID,unsigned int goalID, Abstraction *abstraction, 
                     std::function<Edge*(unsigned int, unsigned int)> getEdge) :
-            vertices(baseVertices), startID(startID), goalID(goalID), abstraction(abstraction), getEdge(getEdge), callback(callback) {
-       
-        Path * p = new Path(goalID, nullptr);
-        p->effortToGoal = 0;
-        p->costToGoal = 0;
-        open.push(p);
-
-        vertices[startID].costGByEdge = 0;
-        openforG.push( &vertices[startID]);
-    }
+            vertices(baseVertices), startID(startID), goalID(goalID), abstraction(abstraction), getEdge(getEdge), callback(callback) {}
 
     void updateCostG() {
-        // clean and initial ? 
+        // clean may have bug because we don't delete all pointers here.
+        openForG.clean();
+        vertices[startID].costGByEdge = 0;
+        openforG.push( &vertices[startID]);
         while(!openForG.isEmpty()) {
             Vertex *v = openForG.pop();
             std::vector<unsigned int> kidVetices =
@@ -53,8 +56,13 @@ class AtemptsDijkstra {
         }
     }
 
-    void computeShortestPath() {
-        // clean and initial ? 
+    void updatePareto() {
+        // clean may have bug because we don't delete all pointers here.
+        open.clean();
+        Path * p = new Path(goalID, nullptr);
+        p->effortToGoal = 0;
+        p->costToGoal = 0;
+        open.push(p);
         while(!open.isEmpty()) {
             Path *currentP = open.pop();
             std::vector<unsigned int> kidVetices =

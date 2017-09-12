@@ -1,3 +1,11 @@
+/**
+ * \file atemptsplanner.hpp
+ *
+ * ATEMPTS planner
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */ 
 #pragma once
 
 #include "ompl/control/planners/PlannerIncludes.h"

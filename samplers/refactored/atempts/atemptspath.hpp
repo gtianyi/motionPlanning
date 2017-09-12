@@ -1,6 +1,11 @@
-/*
-  
- */ 
+/**
+ * \file atemptspath.hpp
+ *
+ * path object 
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */   
 
 #pragma once
 

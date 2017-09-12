@@ -1,3 +1,11 @@
+/**
+ * \file anytimebeastsampler_Atemtps.hpp
+ *
+ * ATEMPTS sampler
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */ 
 #pragma once
 
 #include <set>

@@ -1,3 +1,11 @@
+/**
+ * \file abstractedge_atemtps.hpp
+ *
+ * edge object
+ *
+ * \author Tianyi Gu
+ * \date   09 / 12 / 2017
+ */ 
 #pragma once
 
 #include "../../structs/betadistribution.hpp"
