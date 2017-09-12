@@ -17,6 +17,8 @@ namespace base {
 
 namespace refactored {
 
+namespace atempts {
+
 template <class Vertex, class Edge>
 class AtemptsDijkstra {
 
@@ -105,6 +107,8 @@ class AtemptsDijkstra {
     InPlaceBinaryHeap<Vertex, AbstractVertexOps> openForG;
     unordered_map<int, double> closeForG;
 };
+
+}
 
 }
 

@@ -23,6 +23,8 @@ namespace base {
 
 namespace refactored {
 
+namespace atempts {
+
 class AnytimeBeastSampler_Atemtps : public ompl::base::UniformValidStateSampler {
     typedef AbstractVertex Vertex;
     typedef AbstractEdge Edge;
@@ -387,6 +389,8 @@ protected:
     DStarAble<Vertex, Edge> *dstar;
     DijkstraAble<Vertex> *dijkstra;
 };
+
+}
 
 }
 

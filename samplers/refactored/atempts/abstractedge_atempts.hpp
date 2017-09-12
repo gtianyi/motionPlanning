@@ -16,6 +16,7 @@ namespace base {
 
 namespace refactored {
 
+namespace atempts {
 class AbstractEdge {
   public:
     static double validEdgeDistributionAlpha, validEdgeDistributionBeta, invalidEdgeDistributionAlpha, invalidEdgeDistributionBeta;
@@ -126,6 +127,8 @@ double AbstractEdge::invalidEdgeDistributionAlpha = 0;
 double AbstractEdge::invalidEdgeDistributionBeta = 0;
 
 
+
+}
 
 }
 

@@ -15,6 +15,8 @@ namespace base {
 
 namespace refactored {
 
+namespace atempts {
+
 class AtemptsPath {
   public:
    
@@ -46,6 +48,8 @@ class AtemptsPath {
     double effortToGoal = std::numeric_limits<double>::infinity();
     double costToGoal = std::numeric_limits<double>::infinity();
 };
+
+}
 
 }
 

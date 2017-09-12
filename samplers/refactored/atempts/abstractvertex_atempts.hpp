@@ -14,6 +14,8 @@ namespace base {
 
 namespace refactored {
 
+namespace atempts {
+
 class AbstractVertex {
   public:
 
@@ -134,6 +136,8 @@ class AbstractVertex {
     // header sentiel node of trade-off curve link list 
     Path * paretoFrontier = new Path(0, nullptr); 
 };
+
+}
 
 }
 
