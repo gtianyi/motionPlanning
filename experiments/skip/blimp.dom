@@ -1,0 +1,104 @@
+#!/bin/bash
+
+DOMAIN=("Blimp")
+DOMAIN_C=-1
+
+PROPSTEPSIZE=(0.05)
+PROPSTEPSIZE_C=0
+
+MINCTRLDUR=(1)
+MINCTRLDUR_C=0
+
+MAXCTRLDUR=(100)
+MAXCTRLDUR_C=0
+
+GOALRADIUS=(0.25)
+GOALRADIUS_C=0
+
+STARTGOAL_C=0
+
+MAP=()
+STARTGOAL=()
+BOUNDS=()
+
+source 3dinstances.inc
+
+#dont' include map or bounds since this is all paired
+DOM_TOTAL=$((${#DOMAIN[@]} * ${#PROPSTEPSIZE[@]} * ${#MINCTRLDUR[@]} * ${#MAXCTRLDUR[@]} * ${#GOALRADIUS[@]} * ${#STARTGOAL[@]}))
+DOM_TOTAL_C=0
+
+function moreDomainSettings() {
+	local  __resultvar=$1
+	local hasMore=true
+	if [ "$DOM_TOTAL_C" -ge "$DOM_TOTAL" ];
+	then
+		hasMore=false
+	fi
+	((DOM_TOTAL_C++))
+
+	old=$DOMAIN_C
+	increment DOMAIN[@] DOMAIN_C
+	if [ "$old" -gt "$DOMAIN_C" ] || [ "$old" -eq "$DOMAIN_C" ]
+	then
+		old=$PROPSTEPSIZE_C
+		increment PROPSTEPSIZE[@] PROPSTEPSIZE_C
+		if [ "$old" -gt "$PROPSTEPSIZE_C" ] || [ "$old" -eq "$PROPSTEPSIZE_C" ]
+		then
+			old=$MINCTRLDUR_C
+			increment MINCTRLDUR[@] MINCTRLDUR_C
+			if [ "$old" -gt "$MINCTRLDUR_C" ] || [ "$old" -eq "$MINCTRLDUR_C" ]
+			then
+				old=$MAXCTRLDUR_C
+				increment MAXCTRLDUR[@] MAXCTRLDUR_C
+				if [ "$old" -gt "$MAXCTRLDUR_C" ] || [ "$old" -eq "$MAXCTRLDUR_C" ]
+				then
+					old=$GOALRADIUS_C
+					increment GOALRADIUS[@] GOALRADIUS_C
+					if [ "$old" -gt "$GOALRADIUS_C" ] || [ "$old" -eq "$GOALRADIUS_C" ]
+					then
+						increment STARTGOAL[@] STARTGOAL_C
+					fi
+				fi
+			fi
+		fi
+	fi
+
+	eval $__resultvar="'$hasMore'"
+}
+
+function getDomainPathAttrs() {
+	local  __resultvar=$1
+	local path=""
+	
+	path="$path domain=${DOMAIN[$DOMAIN_C]}"
+	path="$path propagation_step_size=${PROPSTEPSIZE[$PROPSTEPSIZE_C]}"
+	path="$path min_control_duration=${MINCTRLDUR[$MINCTRLDUR_C]}"
+	path="$path max_control_duration=${MAXCTRLDUR[$MAXCTRLDUR_C]}"
+	path="$path goal_radius=${GOALRADIUS[$GOALRADIUS_C]}"
+	path="$path map=${MAP[$STARTGOAL_C]}"
+	path="$path agent=blimp.dae"
+
+	INST=""
+	getInstanceNumber $STARTGOAL_C INST
+	path="$path inst=${INST}"
+
+	eval $__resultvar="'$path'" 
+}
+
+function getDomainParamFile() {
+	local  __resultvar=$1
+	local param=""
+	
+	param="${param}Domain ? ${DOMAIN[$DOMAIN_C]}\n"
+	param="${param}PropagationStepSize ? ${PROPSTEPSIZE[$PROPSTEPSIZE_C]}\n"
+	param="${param}MinControlDuration ? ${MINCTRLDUR[$MINCTRLDUR_C]}\n"
+	param="${param}MaxControlDuration ? ${MAXCTRLDUR[$MAXCTRLDUR_C]}\n"
+	param="${param}GoalRadius ? ${GOALRADIUS[$GOALRADIUS_C]}\n"
+	param="${param}${STARTGOAL[$STARTGOAL_C]}\n"
+	param="${param}EnvironmentBounds ? ${BOUNDS[$STARTGOAL_C]}\n"
+	param="${param}EnvironmentMesh ? ${MAP[$STARTGOAL_C]}\n"
+	param="${param}AgentMesh ? blimp.dae\n"
+	
+
+	eval $__resultvar="'$param'" 
+}

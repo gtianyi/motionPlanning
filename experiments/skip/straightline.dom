@@ -1,0 +1,84 @@
+#!/bin/bash
+
+DOMAIN=("StraightLine")
+DOMAIN_C=-1
+
+PROPSTEPSIZE=(0.01)
+PROPSTEPSIZE_C=-1
+
+MINCTRLDUR=(1)
+MINCTRLDUR_C=-1
+
+MAXCTRLDUR=(100)
+MAXCTRLDUR_C=-1
+
+GOALRADIUS=(0.01)
+GOALRADIUS_C=-1
+
+STARTGOAL_C=-1
+
+MAP=()
+STARTGOAL=()
+BOUNDS=()
+
+MAP[0]="rrtstar_env.dae"
+STARTGOAL[0]="Start ? 0 0\nGoal ? -10 -9\n"
+BOUNDS[0]="-15 15 -15 15"
+
+#dont' include map or bounds since this is all paired
+DOM_TOTAL=$((${#DOMAIN[@]} * ${#PROPSTEPSIZE[@]} * ${#MINCTRLDUR[@]} * ${#MAXCTRLDUR[@]} * ${#GOALRADIUS[@]} * ${#STARTGOAL[@]}))
+DOM_TOTAL_C=0
+
+function moreDomainSettings() {
+	local  __resultvar=$1
+	local hasMore=true
+
+	if [ "$DOM_TOTAL_C" -ge "$DOM_TOTAL" ];
+	then
+		hasMore=false
+	fi
+	((DOM_TOTAL_C++))
+
+	increment DOMAIN[@] DOMAIN_C
+	increment PROPSTEPSIZE[@] PROPSTEPSIZE_C
+	increment MINCTRLDUR[@] MINCTRLDUR_C
+	increment MAXCTRLDUR[@] MAXCTRLDUR_C
+	increment GOALRADIUS[@] GOALRADIUS_C
+	increment STARTGOAL[@] STARTGOAL_C
+
+	eval $__resultvar="'$hasMore'"
+}
+
+function getDomainPathAttrs() {
+	local  __resultvar=$1
+	local path=""
+	
+	path="$path domain=${DOMAIN[$DOMAIN_C]}"
+	path="$path propagation_step_size=${PROPSTEPSIZE[$PROPSTEPSIZE_C]}"
+	path="$path min_control_duration=${MINCTRLDUR[$MINCTRLDUR_C]}"
+	path="$path max_control_duration=${MAXCTRLDUR[$MAXCTRLDUR_C]}"
+	path="$path goal_radius=${GOALRADIUS[$GOALRADIUS_C]}"
+	path="$path map=${MAP[$STARTGOAL_C]}"
+	path="$path inst=0"
+
+	eval $__resultvar="'$path'" 
+}
+
+function getDomainParamFile() {
+	local  __resultvar=$1
+	local param=""
+	
+	param="${param}Domain ? ${DOMAIN[$DOMAIN_C]}\n"
+	param="${param}PropagationStepSize ? ${PROPSTEPSIZE[$PROPSTEPSIZE_C]}\n"
+	param="${param}MinControlDuration ? ${MINCTRLDUR[$MINCTRLDUR_C]}\n"
+	param="${param}MaxControlDuration ? ${MAXCTRLDUR[$MAXCTRLDUR_C]}\n"
+	param="${param}GoalRadius ? ${GOALRADIUS[$GOALRADIUS_C]}\n"
+	param="${param}${STARTGOAL[$STARTGOAL_C]}\n"
+	param="${param}EnvironmentMesh ? ${MAP[$STARTGOAL_C]}\n"
+	param="${param}EnvironmentBounds ? ${BOUNDS[$STARTGOAL_C]}\n"
+
+	param="${param}AgentMesh ? small_box.dae\n"
+
+
+	eval $__resultvar="'$param'" 
+}
