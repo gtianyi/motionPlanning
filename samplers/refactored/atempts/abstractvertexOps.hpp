@@ -1,3 +1,11 @@
+/**
+ * \file atemptspath.hpp
+ *
+ * path object 
+ *
+ * \author Tianyi Gu
+ * \date   10 / 03 / 2017
+ */   
 #pragma once
 
 namespace ompl {

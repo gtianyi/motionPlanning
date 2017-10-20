@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11  -O3   CMakeFiles/MotionPlanning.dir/main.cpp.o  -o MotionPlanning -rdynamic /usr/local/lib/libompl.so -lassimp -lfcl -Wl,-Bstatic -lboost_system -Wl,-Bdynamic -llapack -lblas -Wl,-rpath,/usr/local/lib 
