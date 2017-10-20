@@ -1,3 +1,0 @@
-/home/guty/gopath/src/github.com/gu/motionPlanning/build/CMakeFiles/edit_cache.dir
-/home/guty/gopath/src/github.com/gu/motionPlanning/build/CMakeFiles/rebuild_cache.dir
-/home/guty/gopath/src/github.com/gu/motionPlanning/build/CMakeFiles/MotionPlanning.dir
