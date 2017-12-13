@@ -4,9 +4,11 @@
  * vertex object
  *
  * \author Tianyi Gu
- * \date   09 / 12 / 2017
+ * \date   10 / 31 / 2017
  */ 
 #pragma once
+#include "atemptspath.hpp"
+using namespace std;
 
 namespace ompl {
 
@@ -19,12 +21,17 @@ namespace atempts {
 class AbstractVertex {
   public:
 
-    struct AbstractVetexComparator {
-        bool operator()(const AbstractVertex *lhs, const AbstractVertex *rhs) const {
-            if(fabs(lhs->effort - rhs->effort) <= 0.00001) {
-                return lhs->startID < rhs->startID;
-            }
-            return lhs->effort < rhs->effort;
+    struct ComparatorByEffortToGoal {
+        bool operator()(const shared_ptr<AbstractVertex> lhs,
+                        const shared_ptr<AbstractVertex> rhs) const {
+            return lhs->currentEffortToGoal < rhs->currentEffortToGoal;
+        }
+    };
+
+    struct ComparatorByCostGByEdge {
+        bool operator()(const shared_ptr<AbstractVertex> lhs,
+                        const shared_ptr<AbstractVertex> rhs) const {
+            return lhs->costGByEdge < rhs->costGByEdge;
         }
     };
     
@@ -43,13 +50,12 @@ class AbstractVertex {
         assert(states.size() > 0);
         assert(iter != states.end());
         states.erase(iter);
-        if(states.size() == 0) costG = std::numeric_limits<double>::infinity();
-        else costG = (costG * (states.size() + 1)- g) / double(states.size())
+        if(states.size() == 0)
+            costG = std::numeric_limits<double>::infinity();
+        else
+            costG = (costG * (states.size() + 1)- g) / double(states.size());
     }
-
-   
-
-    // add by tianyi, Aug / 8 / 2017
+    
     ompl::base::State* sampleStateByDis(const ompl::base::SpaceInformation *si_,
                                         ompl::base::State* targetState) {
         double bestDis = std::numeric_limits<double>::infinity();
@@ -71,37 +77,27 @@ class AbstractVertex {
         return ret;
     }
 
-    static bool pred(const AbstractVertex *a, const AbstractVertex *b) {
-        return a->currentEffortToGoal < b->currentEffortToGoal;
-    }
-    static unsigned int getHeapIndex(const AbstractVertex *r) {
-        return r->heapIndex;
-    }
-    static void setHeapIndex(AbstractVertex *r, unsigned int i) {
-        r->heapIndex = i;
-    }
-
-    bool operator<(const AtemptsVertexWrapper& k) const {
-        if(currentEffortToGoal == k.currentEffortToGoal)
-            return currentCostToGoal < k.currentCostToGoal;
-        return currentEffortToGoal < k.currentEffortToGoal;
-    }
-
-    bool insertPath(Path * p, double incumbentCost){
-        Path *cur = paretoFrontier->next;
-        Path *prev = paretoFrontier;
+    bool insertPath(shared_ptr<AtemptsPath> p, double incumbentCost){
+        shared_ptr<AtemptsPath> cur = paretoFrontier->next;
+        shared_ptr<AtemptsPath> prev = paretoFrontier;
+        updateCurrentCostG();
+        // prune all paths whose total cost is greater than incumbent
         while(cur != nullptr){
-            if(cur->costToGoal + costG > incumbent){
-                // prune all paths whose total cost is greater than incumbent
+            if(cur->costToGoal + currentCostG > incumbentCost){
                 prev->next = cur->next;
-                delete cur;
                 cur = prev->next;
             }
-            else if (p->costToGoal < cur->costToGoal){
+            else break;
+        }
+        updateBest();
+        if(p->costToGoal + currentCostG > incumbentCost) {
+            return false;
+        }
+        while(cur !=  nullptr){
+             if (p->costToGoal < cur->costToGoal){
                 if(p->effortToGoal < cur->effortToGoal){
                     // p dominate cur,  delete cur
                     prev->next = cur->next;
-                    delete cur;
                     cur = prev->next;
                 }
                 else{
@@ -114,11 +110,36 @@ class AbstractVertex {
             // dominate by cur;
             else return false;
         }
-        
         p->next = prev->next;
         prev->next = p;
-       
+        updateBest();
         return true;
+    }
+
+    void updateCurrentCostG(){
+        currentCostG = states.size() == 0 ? costGByEdge : costG;
+        // if no state in region, another way would be using
+        // edge cost toward the best frontier region + frontier costG
+    }
+    void updateBest(){
+        if(paretoFrontier->next == nullptr){
+            currentEffortToGoal = std::numeric_limits<double>::infinity();
+            currentCostF = std::numeric_limits<double>::infinity();
+            bestPath = nullptr;
+        }
+        else{
+            currentEffortToGoal =  paretoFrontier->next->effortToGoal;
+            currentCostF = paretoFrontier->next->costToGoal + currentCostG;
+            bestPath = paretoFrontier->next;
+        }
+    }
+
+    void clearPareto(){
+        paretoFrontier->next = nullptr;
+        currentCostG = std::numeric_limits<double>::infinity();
+        currentEffortToGoal = std::numeric_limits<double>::infinity();
+        currentCostF = std::numeric_limits<double>::infinity();
+        bestPath = nullptr;
     }
   
     unsigned int id;    
@@ -129,12 +150,16 @@ class AbstractVertex {
 
     // costG is average of all motions begin at the start state and end in here
     double costG = std::numeric_limits<double>::infinity();
-    double costGByEdge = std::numeric_limits<double>::infinity(); 
+    // costGByEdge is the cost given by the abstract graph
+    double costGByEdge = std::numeric_limits<double>::infinity();
+    // if there is motion, we use costG,  other wise we use costGByEdge
+    double currentCostG = std::numeric_limits<double>::infinity();
     double currentEffortToGoal = std::numeric_limits<double>::infinity();
     double currentCostF = std::numeric_limits<double>::infinity();
-    Path * bestPath; // current best path that better than incumbent
+    // current best path that better than incumbent
+    shared_ptr<AtemptsPath> bestPath = nullptr;
     // header sentiel node of trade-off curve link list 
-    Path * paretoFrontier = new Path(0, nullptr); 
+    shared_ptr<AtemptsPath> paretoFrontier = make_shared<AtemptsPath>(0, nullptr); 
 };
 
 }

@@ -44,7 +44,8 @@ GlobalParameters globalParameters;
 #include "planners/anytimebeastplanner.hpp"
 #include "planners/anytimebeastcostplanner.hpp"
 #include "planners/anytimebeastplannernew.hpp"
-// #include "planners/atemptsplanner.hpp"
+#include "planners/uctplanner.hpp"
+#include "planners/atemptsplanner.hpp"
 
 
 void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
@@ -75,6 +76,8 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else if(planner.compare("BEASTnew") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
+  } else if(planner.compare("UCTtest") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::UCTPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   }
 
   /* anytime planners */
@@ -92,7 +95,7 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
   } else if(planner.compare("AnytimeBEASTnew") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else if(planner.compare("Atempts") == 0) {
-      // plannerPointer = ompl::base::PlannerPtr(new ompl::control::AtemptsPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AtemptsPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else {
     fprintf(stderr, "unrecognized planner\n");
     return;

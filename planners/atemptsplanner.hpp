@@ -4,7 +4,7 @@
  * ATEMPTS planner
  *
  * \author Tianyi Gu
- * \date   09 / 12 / 2017
+ * \date   11 / 27 / 2017
  */ 
 #pragma once
 
@@ -12,11 +12,7 @@
 #include "ompl/datastructures/NearestNeighbors.h"
 
 #include "../structs/filemap.hpp"
-#include "../samplers/anytimebeastsampler.hpp"
-#include "../samplers/anytimebeastsamplershim.hpp"
-
-#include "../samplers/refactored/anytimebeastsampler.hpp"
-// #include "../samplers/refactored/atempts/anytimebeastsampler_Atempts.hpp"
+#include "../samplers/refactored/atempts/anytimebeastsampler_Atempts.hpp"
 
 #include "modules/costpruningmodule.hpp"
 #include "modules/sstpruningmodule.hpp"
@@ -25,26 +21,26 @@ namespace ompl {
 
 namespace control {
 
-class AnytimeBeastPlannernew : public ompl::control::RRT {
+class AtemptsPlanner : public ompl::control::RRT {
   protected:
     class Witness;
 
   public:
     /** \brief Constructor */
-    AnytimeBeastPlannernew(const SpaceInformationPtr &si, const FileMap &params) :
+    AtemptsPlanner(const SpaceInformationPtr &si, const FileMap &params) :
             ompl::control::RRT(si), params(params) {
 
         setName("AnytimeBeastPlannernew");
 
         propagationStepSize = siC_->getPropagationStepSize();
 
-        Planner::declareParam<bool>("intermediate_states", this, &AnytimeBeastPlannernew::setIntermediateStates, &AnytimeBeastPlannernew::getIntermediateStates);
+        Planner::declareParam<bool>("intermediate_states", this, &AtemptsPlanner::setIntermediateStates, &AtemptsPlanner::getIntermediateStates);
 
         //Obviously this isn't really a parameter but I have no idea how else to get it into the output file through the benchmarker
-        Planner::declareParam<double>("samplerinitializationtime", this, &AnytimeBeastPlannernew::ignoreSetterDouble, &AnytimeBeastPlannernew::getSamplerInitializationTime);
+        Planner::declareParam<double>("samplerinitializationtime", this, &AtemptsPlanner::ignoreSetterDouble, &AtemptsPlanner::getSamplerInitializationTime);
     }
 
-    virtual ~AnytimeBeastPlannernew() {
+    virtual ~AtemptsPlanner() {
         freeMemory();
     }
 
@@ -131,7 +127,7 @@ class AnytimeBeastPlannernew : public ompl::control::RRT {
             // 	newsampler = new ompl::base::AnytimeBeastSamplerShim((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(), goal_s, optimizationObjective, params, rng_);
             // }
 
-            newsampler = new ompl::base::refactored::atempts::AnytimeBeastSampler_atempts((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(), goal_s, optimizationObjective, params);
+            newsampler = new ompl::base::refactored::atempts::AnytimeBeastSampler_Atempts((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(), goal_s, optimizationObjective, params);
             newsampler->initialize();
 
             samplerInitializationTime = (double)(clock() - start) / CLOCKS_PER_SEC;
@@ -148,7 +144,7 @@ class AnytimeBeastPlannernew : public ompl::control::RRT {
         Control *rctrl = rmotion->control;
 
         Motion *resusableMotion = new Motion(siC_);
-
+        
         while(ptc == false) {
             MotionWithCost *nmotion = NULL;
 
@@ -321,10 +317,8 @@ class AnytimeBeastPlannernew : public ompl::control::RRT {
         bool isInDatastructures = false;
     };
 
-    ompl::base::refactored::AnytimeBeastSampler_Dis *newsampler = NULL;
-    // ompl::base::AnytimeBeastSampler *newsampler = NULL;
-
-	
+    ompl::base::refactored::atempts::AnytimeBeastSampler_Atempts *newsampler = NULL;
+   	
     base::OptimizationObjectivePtr optimizationObjective;
     double propagationStepSize, selectionRadius, pruningRadius, xi, n0, samplerInitializationTime = 0;
     clock_t start;
