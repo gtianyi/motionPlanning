@@ -1,4 +1,4 @@
-Timeout ? 300
+Timeout ? 1000
 
 Memory ? 1000
 
@@ -8,7 +8,7 @@ Seed ? 2
 
 Runs ? 1
 
-Domain ? Quadrotor
+Domain ? KinematicCar
  
 PropagationStepSize ? 0.05
 
@@ -18,23 +18,23 @@ MaxControlDuration ? 100
 
 GoalRadius ? 1
 
-Start ? 3 -5 1
+Start ? 3 -5
 
-Goal ? 0 -25 0
+Goal ? 0 -25
 
-EnvironmentBounds ? -30 30 -30 30 -5 5
+EnvironmentBounds ? -30 30 -30 30
 
-EnvironmentMesh ? forest.dae
+EnvironmentMesh ? empty.dae
 
-AgentMesh ? quadrotor.dae
+AgentMesh ? car2_planar_robot.dae
 
 Planner ? Atempts
  
 AbstractionType ? PRM
 
-NumEdges ? 3
+NumEdges ? 5
 
-PRMSize ? 20
+PRMSize ? 1000
 
 StateRadius ? 6
 
