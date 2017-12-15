@@ -1,0 +1,22 @@
+Timeout ? 300
+Memory ? 1000
+AddIntermediateStates ? false
+Seed ? 3
+Runs ? 1
+ Domain ? Quadrotor
+PropagationStepSize ? 0.05
+MinControlDuration ? 1
+MaxControlDuration ? 100
+GoalRadius ? 1
+Start ? 3 -5 1
+Goal ? 0 -25 0
+
+EnvironmentBounds ? -30 30 -30 30 -5 5
+EnvironmentMesh ? forest.dae
+AgentMesh ? quadrotor.dae
+ Planner ? SST*
+SelectionRadius ? 2.0
+PruningRadius ? 1.0
+N0 ? 100
+Xi ? 0.99
+ Output ? output-sststar
