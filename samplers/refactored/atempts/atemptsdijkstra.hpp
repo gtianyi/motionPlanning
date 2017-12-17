@@ -35,38 +35,26 @@ class AtemptsDijkstra {
             priority_queue<shared_ptr<Vertex>,
                            vector<shared_ptr<Vertex>>,
                            typename Vertex::ComparatorByCostGByEdge>>();
-        closeForG.clear();
+        double closeForG[vertices.size()] = {-1.0};
         vertices[startID]->costGByEdge =  0;
         openForGPtr->push( vertices[startID]);
         while( !openForGPtr->empty()) {
-            // cout << "open size: "<< openForGPtr->size() << endl;
-            // cout << "close size: "<< closeForG.size() << endl;
             shared_ptr<Vertex> v =  openForGPtr->top();
             openForGPtr->pop();
-            // cout << "top " << v->costGByEdge << endl;
             std::vector<unsigned int >  kidVertices =
                     abstraction->getNeighboringCells(v->id);
-            for(unsigned int kidVertexIndex:kidVertices){
+            for(unsigned int kidVertexIndex:kidVertices) {
                 shared_ptr<Vertex> kid = vertices[kidVertexIndex];
                 shared_ptr<Edge> e =  getEdge(v->id,  kidVertexIndex);
                 double newCost =  v->costGByEdge +  e->getCost(epsilonBar);
-                if(closeForG.find(kidVertexIndex) !=  closeForG.end()){
-                    // if(newCost < closeForG[kidVertexIndex]){
-                    //     cout << "wrong...  " << newCost << " " << closeForG[kidVertexIndex] << endl;
-                    //     closeForG.erase(kidVertexIndex);
-                    //     kid->costGByEdge =  newCost;
-                    // }
-                    // else continue;
-                    continue;
-                }
-                else{
+                if(closeForG[kidVertexIndex] == -1.0){
                     kid->costGByEdge =  newCost;
+                    openForGPtr->push(kid);
                 }
-                openForGPtr->push(kid);
-                closeForG[v->id] =  v->costGByEdge;
             }
+            closeForG[v->id] =  v->costGByEdge;
         }
-        cout << "done cost........................................  " << endl;
+        cout << "done cost............................. " << endl;
     }
 
     void updatePareto() {
@@ -122,8 +110,7 @@ class AtemptsDijkstra {
     shared_ptr<priority_queue<shared_ptr<Vertex>,
                               vector<shared_ptr<Vertex>>,
                               typename Vertex::ComparatorByCostGByEdge>> openForGPtr;
-    unordered_map<int,  double >  closeForG;
-
+   
   protected:
     
     unsigned int goalID;
