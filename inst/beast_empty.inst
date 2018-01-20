@@ -5,7 +5,7 @@ Timeout ? 300
 Memory ? 1000
 
 #This is the seed used to initialize the random number generator
-Seed ? 1
+Seed ? 2
 
 #This is how many runs will be executed -- the way I have things set up it'll always be 1
 Runs ? 1
@@ -59,7 +59,7 @@ WhichSearch ? D*
 
 StateRadius ? 5
 
-PRMSize ? 1000
+PRMSize ? 100
 
 NumEdges ? 5
 

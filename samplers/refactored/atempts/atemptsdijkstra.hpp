@@ -54,7 +54,7 @@ class AtemptsDijkstra {
             }
             closeForG[v->id] =  v->costGByEdge;
         }
-        cout << "done cost............................. " << endl;
+        // cout << "done cost............................. " << endl;
     }
 
     void updatePareto() {
@@ -68,9 +68,9 @@ class AtemptsDijkstra {
                            AtemptsPath::AtemptsPathComparator>>();
         shared_ptr<Path> p = make_shared<Path>(goalID, nullptr);
         p->effortToGoal = 0;
+        p->effortToGoalWithBonus = 0;
         p->costToGoal = 0;
         openPtr->push(p);
-        int totalpath = 1;
         while( !openPtr->empty()) {
             shared_ptr<Path> currentP = openPtr->top();
             openPtr->pop();
@@ -80,18 +80,36 @@ class AtemptsDijkstra {
             for(unsigned int kidVertexIndex:kidVertices){
                 shared_ptr<Path> kid = make_shared<Path>(kidVertexIndex, currentP);
                 shared_ptr<Edge> e = getEdge(kidVertexIndex, currentP->id);
-                kid->effortToGoal = currentP->effortToGoal + e->effort;
+                // kid->effortToGoal = currentP->effortToGoal + e->effort;
+                kid->effortToGoal = currentP->effortToGoalWithBonus + e->effort;
+                kid->effortToGoalWithBonus = currentP->effortToGoalWithBonus +
+                        e->getEffortWithBonus();
                 kid->costToGoal = currentP->costToGoal + e->getCost(epsilonBar);
+                // if(kid->effortToGoal !=  kid->effortToGoalWithBonus){
+                //     cout << "kid index: " << kidVertexIndex << endl;
+                //     cout << "kid effort2G: " << kid->effortToGoal << endl;
+                //     cout << "kid effort2GwithB: " << kid->effortToGoalWithBonus << endl;
+                //     cout << "parent effort2GwithB: " << currentP->effortToGoalWithBonus << endl;
+                //     cout << "parent effort2G: " << currentP->effortToGoal << endl;
+                //     cout << "kid cost2G: " << kid->costToGoal << endl;
+                // }
                 if(vertices[kidVertexIndex]->insertPath(kid, incumbentCost)){
                     openPtr->push(kid);
-                    totalpath++;
                 }
             }
         }
-        cout << "#nodes: "<< vertices.size() << endl;
-        cout << "#total path " << totalpath << endl;
-        cout << "#average: " << (double)totalpath / (double)vertices.size() << endl;
-        cout << "done pareto........................................  " << endl;
+        
+        shared_ptr<Edge> goalEdge = getEdge(goalID, goalID);
+        p->effortToGoal = goalEdge->effort;
+        vertices[goalID]->clearPareto();
+        vertices[goalID]->insertPath(p, incumbentCost);
+        // cout << "goalEdge effort : "<< goalEdge->effort << endl;
+        // cout << "goalV p : "<< vertices[goalID]->undominatePathCount << endl;
+        // cout << "#nodes: "<< vertices.size() << endl;
+        // cout << "#total path " << totalpath << endl;
+        // cout << "#average: " << (double)totalpath / (double)vertices.size() << endl;
+        // cout << "start pareto: " << vertices[startID]->undominatePathCount << endl;
+        // cout << "done pareto........................................  " << endl;
     }
 
     void updateIncumbentCost(double _incumbentCost) {

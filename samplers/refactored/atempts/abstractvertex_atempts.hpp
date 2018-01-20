@@ -24,7 +24,7 @@ class AbstractVertex {
     struct ComparatorByEffortToGoal {
         bool operator()(const shared_ptr<AbstractVertex> lhs,
                         const shared_ptr<AbstractVertex> rhs) const {
-            return lhs->currentEffortToGoal < rhs->currentEffortToGoal;
+            return lhs->currentEffortToGoal > rhs->currentEffortToGoal;
         }
     };
 
@@ -86,6 +86,7 @@ class AbstractVertex {
             if(cur->costToGoal + currentCostG > incumbentCost){
                 prev->next = cur->next;
                 cur = prev->next;
+                undominatePathCount--;
             }
             else break;
         }
@@ -99,6 +100,7 @@ class AbstractVertex {
                     // p dominate cur,  delete cur
                     prev->next = cur->next;
                     cur = prev->next;
+                    undominatePathCount--;
                 }
                 else{
                     prev = cur;
@@ -113,6 +115,7 @@ class AbstractVertex {
         p->next = prev->next;
         prev->next = p;
         updateBest();
+        undominatePathCount++;
         return true;
     }
 
@@ -140,6 +143,7 @@ class AbstractVertex {
         currentEffortToGoal = std::numeric_limits<double>::infinity();
         currentCostF = std::numeric_limits<double>::infinity();
         bestPath = nullptr;
+        undominatePathCount = 0;
     }
   
     unsigned int id;    
@@ -159,7 +163,8 @@ class AbstractVertex {
     // current best path that better than incumbent
     shared_ptr<AtemptsPath> bestPath = nullptr;
     // header sentiel node of trade-off curve link list 
-    shared_ptr<AtemptsPath> paretoFrontier = make_shared<AtemptsPath>(0, nullptr); 
+    shared_ptr<AtemptsPath> paretoFrontier = make_shared<AtemptsPath>(0, nullptr);
+    int undominatePathCount = 0;
 };
 
 }

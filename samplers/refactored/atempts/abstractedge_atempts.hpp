@@ -46,10 +46,17 @@ class AbstractEdge {
                 beta = invalidEdgeDistributionBeta;
                 effort = getEstimatedRequiredSamples();
                 break;
-
             case Abstraction::Edge::UNKNOWN:
                 // alpha = unknownEdgeDistributionAlpha;
                 // beta = unknownEdgeDistributionBeta;
+                alpha = invalidEdgeDistributionAlpha;
+                beta = invalidEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
+                break;
+            default:
+                alpha = invalidEdgeDistributionAlpha;
+                beta = invalidEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
                 break;
         }
     }
@@ -70,11 +77,10 @@ class AbstractEdge {
         return estimate;
     }
 
-    double getHypotheticalEstimatedSamplesAfterPositivePropagation(unsigned int numberOfStates) const {
-        double additive = (1. / (double)numberOfStates);
-        double probability = (alpha + additive) / (alpha + additive + beta);
+    double getEffortWithBonus() const {
+        double probability = (alpha + 1) / (alpha + beta + 1);
         double estimate = 1. / probability;
-        return estimate;
+        return 1.0;
     }
 
     void rewardHypotheticalSamplesAfterPositivePropagation(unsigned int numberOfStates) {

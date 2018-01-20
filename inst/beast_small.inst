@@ -1,4 +1,4 @@
-Timeout ? 3600
+Timeout ? 60
 
 Memory ? 1000
 
@@ -28,7 +28,7 @@ EnvironmentMesh ? forest.dae
 
 AgentMesh ? car2_planar_robot.dae
 
-Planner ? Atempts
+Planner ? BEAST
  
 AbstractionType ? PRM
 
@@ -62,4 +62,4 @@ CostPruningStyle ? G
 
 Sampler ? BEAST
 
-Output ? outfile-atempts-small
+Output ? outfile-beast-small

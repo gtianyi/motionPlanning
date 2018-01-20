@@ -37,6 +37,7 @@ class AtemptsPath {
 
     double effortToGoal = std::numeric_limits<double>::infinity();
     double costToGoal = std::numeric_limits<double>::infinity();
+    double effortToGoalWithBonus = std::numeric_limits<double>::infinity();
 };
 
 }

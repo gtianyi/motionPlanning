@@ -144,8 +144,10 @@ class AtemptsPlanner : public ompl::control::RRT {
         Control *rctrl = rmotion->control;
 
         Motion *resusableMotion = new Motion(siC_);
-        
+        int propNum = 0;
         while(ptc == false) {
+            propNum++;
+            cout << "propNum: " << propNum << endl;
             MotionWithCost *nmotion = NULL;
 
             if(!newsampler->sample(resusableMotion->state, rstate, ptc)) {
@@ -199,6 +201,7 @@ class AtemptsPlanner : public ompl::control::RRT {
                         double dist = 0.0;
                         solved = goal->isSatisfied(motion->state, &dist);
                         if(solved && optimizationObjective->isSatisfied(motion->g)) {
+                            cout << "find one ================ " << endl;
                             globalParameters.solutionStream.addSolution(motion->g, start);
 
                             auto removed = sstPruningModule->foundSolution(motion->g);

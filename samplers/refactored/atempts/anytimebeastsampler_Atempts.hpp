@@ -80,9 +80,11 @@ class AnytimeBeastSampler_Atempts : public ompl::base::UniformValidStateSampler 
     }
 
     bool sample(ompl::base::State *from, ompl::base::State *to, const base::PlannerTerminationCondition &ptc) {
-        cout << "opensize: "<< open.size() << endl;
+        // cout << "opensize: "<< open.size() << endl;
         cout << "opentop: "<< open.top()->id << endl;
-        cout << "topeffort: "<< open.top()->currentEffortToGoal << endl;
+        cout << "opentopPareto: "<< open.top()->undominatePathCount << endl;
+        // cout << "epsilonBar: "<< epsilonBar << endl;
+        // cout << "topeffort: "<< open.top()->currentEffortToGoal << endl;
         if(targetEdge != nullptr) {
             if (firstTargetSuccessState != nullptr){
                 targetSuccess();
@@ -101,9 +103,11 @@ class AnytimeBeastSampler_Atempts : public ompl::base::UniformValidStateSampler 
 
         firstTargetSuccessState = nullptr;
 
-        if(targetEdge->startID == targetEdge->endID && targetEdge->startID == goalID) {
+        if(targetEdge->startID == targetEdge->endID &&
+           targetEdge->startID == goalID) {
             goalSampler->sampleGoal(to);
-            si_->copyState(from, vertices[targetEdge->startID]->sampleStateByDis(si_, to));
+            si_->copyState(from, vertices[targetEdge->startID]->
+                           sampleStateByDis(si_, to));
         } else {
             ompl::base::ScopedState<> vertexState(globalParameters.globalAppBaseControl->getGeometricComponentStateSpace());
             vertexState = abstraction->getState(targetEdge->endID);
@@ -176,7 +180,7 @@ class AnytimeBeastSampler_Atempts : public ompl::base::UniformValidStateSampler 
     void foundSolution(const ompl::base::Cost &incumbent) {
         incumbentCost = incumbent.value();
         targetEdge = NULL;
-        addedGoalEdge = false;
+        // addedGoalEdge = false;
     }
 
 protected:
@@ -184,7 +188,15 @@ protected:
         shared_ptr<Edge> e = edges[a][b];
         if(e == NULL) {
             e = make_shared<Edge>(a, b);
-            e->updateEdgeStatusKnowledge(abstraction->getCollisionCheckStatusUnchecked(a, b));
+            if(a == goalID && b == goalID){
+                e->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
+                e->effort = 1;
+            }
+            else{
+                abstraction->isValidEdgeUnchecked(a, b);
+                e->updateEdgeStatusKnowledge(
+                    abstraction->getCollisionCheckStatusUnchecked(a, b));
+            }
             e->setAbstractCost(abstraction->abstractDistanceFunctionByIndex(a, b));
             edges[a][b] = e;
             reverseEdges[b][a] = e;
@@ -193,14 +205,14 @@ protected:
     }
 
     void pushOpen(shared_ptr<Vertex> &v){
-        if(openSetForCheckDuplicate.find(v) ==  openSetForCheckDuplicate.end()){
+        if(openSetForCheckDuplicate.find(v->id) ==
+           openSetForCheckDuplicate.end()){
             open.push(v);
-            openSetForCheckDuplicate.insert(v);
+            openSetForCheckDuplicate.insert(v->id);
         }
     }    
 
     void resortOpen(){
-        std::priority_queue<shared_ptr<Vertex>, vector<shared_ptr<Vertex>>, Vertex::ComparatorByEffortToGoal> open;
         std::make_heap(const_cast<shared_ptr<Vertex>*>( &open.top()),
                        const_cast<shared_ptr<Vertex>*>( &open.top() + open.size()),
                        Vertex::ComparatorByEffortToGoal());
@@ -212,13 +224,17 @@ protected:
         }
         shared_ptr<Vertex> curVertex = open.top();
         if(curVertex->id == goalID){
-            shared_ptr<Edge> e = edges[goalID][goalID];
-            if( !addedGoalEdge){
-                e = make_shared<Edge>(goalID, goalID);
-                e->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
-                e->effort = 1;
-                addedGoalEdge = true;
-            }
+            shared_ptr<Edge> e = getEdge(goalID, goalID);
+            // shared_ptr<Edge> e = edges[goalID][goalID];
+            // if( e == NULL){
+            //     e = make_shared<Edge>(goalID, goalID);
+            //     e->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
+
+            //     e->effort = 1;
+            //     // addedGoalEdge = true;
+            //     edges[goalID][goalID] = e;
+            //     reverseEdges[goalID][goalID] = e;
+            // }
             return e;
         }
         int edgeStart = curVertex->bestPath->id;
@@ -228,55 +244,54 @@ protected:
     }
 
     void targetSuccess() {
-        if(targetEdge->interior) {
-            updateSuccesfulInteriorEdgePropagation(targetEdge);
-            updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
-        } else {
-            //edge has become interior
-            targetEdge->interior = true;
-            targetEdge->succesfulPropagation();
-            updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
-        }
-        cout << "success" << endl;
+        // if(targetEdge->interior) {
+        //     updateSuccesfulInteriorEdgePropagation(targetEdge);
+        //     updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
+        // } else {
+        //     //edge has become interior
+        //     targetEdge->interior = true;
+        //     targetEdge->succesfulPropagation();
+
+        //     updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
+        // }
+        targetEdge->succesfulPropagation();
     }
 
-    void updateSuccesfulInteriorEdgePropagation(shared_ptr<Edge> edge) {
-        double numberOfStates = vertices[edge->endID]->states.size();
-        shared_ptr<Edge> e = getEdge(edge->endID, edge->interiorToNextEdgeID);
-        e->rewardHypotheticalSamplesAfterPositivePropagation(numberOfStates);
-    }
+    // void updateSuccesfulInteriorEdgePropagation(shared_ptr<Edge> edge) {
+    //     double numberOfStates = vertices[edge->endID]->states.size();
+    //     shared_ptr<Edge> e = getEdge(edge->endID, edge->interiorToNextEdgeID);
+    //     e->rewardHypotheticalSamplesAfterPositivePropagation(numberOfStates);
+    // }
 
-    double getInteriorEdgeEffort(shared_ptr<Edge> edge) {
-        double mySamples = edge->getEstimatedRequiredSamples();
-        double numberOfStates = vertices[edge->endID]->states.size();
+    // double getInteriorEdgeEffort(shared_ptr<Edge> edge) {
+    //     double mySamples = edge->getEstimatedRequiredSamples();
+    //     double numberOfStates = vertices[edge->endID]->states.size();
 
-        double bestValue = std::numeric_limits<double>::infinity();
-        auto neighbors = abstraction->getNeighboringCells(edge->endID);
-        for(auto n : neighbors) {
-            if(n == edge->startID) continue;
+    //     double bestValue = std::numeric_limits<double>::infinity();
+    //     auto neighbors = abstraction->getNeighboringCells(edge->endID);
+    //     for(auto n : neighbors) {
+    //         if(n == edge->startID)
+    //             continue;
+    //         shared_ptr<Edge> e = getEdge(edge->endID, n);
+    //         double value = mySamples +
+    //                 e->getHypotheticalEstimatedSamplesAfterPositivePropagation(
+    //                     numberOfStates);
 
-            shared_ptr<Edge> e = getEdge(edge->endID, n);
+    //         if(value < bestValue) {
+    //             bestValue = value;
+    //             edge->interiorToNextEdgeID = n;
+    //         }
+    //     }
+    //     return bestValue;
+    // }
 
-            double value = mySamples + e->getHypotheticalEstimatedSamplesAfterPositivePropagation(numberOfStates);
-
-            if(value < bestValue) {
-                bestValue = value;
-                edge->interiorToNextEdgeID = n;
-            }
-        }
-
-        return bestValue;
-    }
-
-    void updateEdgeEffort(shared_ptr<Edge> e, double effort) {
-        assert(effort >= 0);
-        e->effort = effort;
-    }
+    // void updateEdgeEffort(shared_ptr<Edge> e, double effort) {
+    //     assert(effort >= 0);
+    //     e->effort = effort;
+    // }
 
     void targetFailure() {
         targetEdge->failurePropagation();
-        cout << "fail" << endl;
-
         // here we just update effort without interior thing,  could be a problem
     }
 
@@ -328,7 +343,7 @@ protected:
     // open list contains all verices touched by the motion tree
     // Sorted by EffortToGoal
     std::priority_queue<shared_ptr<Vertex>, vector<shared_ptr<Vertex>>, Vertex::ComparatorByEffortToGoal> open;
-    std::unordered_set<shared_ptr<Vertex>> openSetForCheckDuplicate;
+    std::unordered_set<int> openSetForCheckDuplicate;
    
     shared_ptr<AtemptsDijkstra<Vertex, Edge>> atemptsDijkstra;
 
