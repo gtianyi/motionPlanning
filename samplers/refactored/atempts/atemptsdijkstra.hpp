@@ -71,7 +71,9 @@ class AtemptsDijkstra {
         p->effortToGoalWithBonus = 0;
         p->costToGoal = 0;
         openPtr->push(p);
+        int loopcount = 0;
         while( !openPtr->empty()) {
+            loopcount++;
             shared_ptr<Path> currentP = openPtr->top();
             openPtr->pop();
             std::vector<unsigned int> kidVertices =
@@ -109,6 +111,7 @@ class AtemptsDijkstra {
         // cout << "#total path " << totalpath << endl;
         // cout << "#average: " << (double)totalpath / (double)vertices.size() << endl;
         // cout << "start pareto: " << vertices[startID]->undominatePathCount << endl;
+        cout << "pareto loop: " << loopcount << endl;
         // cout << "done pareto........................................  " << endl;
     }
 

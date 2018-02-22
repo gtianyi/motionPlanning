@@ -59,6 +59,7 @@ class AnytimeBeastSampler_Atempts : public ompl::base::UniformValidStateSampler 
 
         unsigned int abstractionSize = abstraction->getAbstractionSize();
 
+        int totalEdgeCount = 0;
         for(unsigned int i = 0; i < abstractionSize; ++i) {
             shared_ptr<Vertex> v = make_shared<Vertex>(i);
             vertices.push_back(v);
@@ -66,8 +67,10 @@ class AnytimeBeastSampler_Atempts : public ompl::base::UniformValidStateSampler 
             for(auto n : neighbors) {
                 getEdge(i, n);
                 getEdge(n, i);
+                totalEdgeCount += 2;
             }
         }
+        cout << "Edge count: " << totalEdgeCount << endl;
 
         atemptsDijkstra = make_shared<AtemptsDijkstra<Vertex, Edge>>(vertices, startID, goalID, abstraction,
                                             [&](unsigned int a, unsigned int b){ return getEdge(a, b); });

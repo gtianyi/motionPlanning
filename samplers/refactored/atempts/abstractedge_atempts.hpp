@@ -78,8 +78,8 @@ class AbstractEdge {
     }
 
     double getEffortWithBonus() const {
-        double probability = (alpha + 1) / (alpha + beta + 1);
-        double estimate = 1. / probability;
+        // double probability = (alpha + 1) / (alpha + beta + 1);
+        // double estimate = 1. / probability;
         return 1.0;
     }
 
