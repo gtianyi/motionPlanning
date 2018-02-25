@@ -121,8 +121,9 @@ class BeastPlanner : public ompl::control::RRT {
         base::State  *xstate = si_->allocState();
 
         Motion *resusableMotion = new Motion(siC_);
-
+        int propNum = 0;
         while(ptc == false) {
+            propNum++;
             Motion *nmotion = NULL;
 
             /* sample random state (with goal biasing) */
@@ -236,7 +237,7 @@ class BeastPlanner : public ompl::control::RRT {
                 }
             }
         }
-
+        std::cout << "propNUM: "<< propNum << std::endl;
         bool solved = false;
         bool approximate = false;
         if(solution == NULL) {

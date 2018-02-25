@@ -8,8 +8,6 @@
  */ 
 #pragma once
 
-#include "../../structs/betadistribution.hpp"
-
 namespace ompl {
 
 namespace base {
@@ -30,7 +28,8 @@ class AbstractEdge {
         }
     };
 
-    AbstractEdge(unsigned int startID, unsigned int endID) : startID(startID), endID(endID), costReductionSuccess(1,0) {}
+    AbstractEdge(unsigned int startID, unsigned int endID) :
+            startID(startID), endID(endID){}
 
     virtual ~AbstractEdge() {}
 
@@ -40,37 +39,36 @@ class AbstractEdge {
             case Abstraction::Edge::VALID:
                 alpha = validEdgeDistributionAlpha;
                 beta = validEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
                 break;
             case Abstraction::Edge::INVALID:
                 alpha = invalidEdgeDistributionAlpha;
                 beta = invalidEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
                 break;
-
             case Abstraction::Edge::UNKNOWN:
                 // alpha = unknownEdgeDistributionAlpha;
                 // beta = unknownEdgeDistributionBeta;
+                alpha = invalidEdgeDistributionAlpha;
+                beta = invalidEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
+                break;
+            default:
+                alpha = invalidEdgeDistributionAlpha;
+                beta = invalidEdgeDistributionBeta;
+                effort = getEstimatedRequiredSamples();
                 break;
         }
     }
 
-    double getProbabilityOfCostReduction() const {
-        return costReductionSuccess.getProbabilityOfSuccess();
-    }
-
-    void costReduced() {
-        costReductionSuccess.incrementAlpha();
-    }
-
-    void costNotReduced() {
-        costReductionSuccess.incrementBeta();
-    }
-
     void succesfulPropagation() {
         alpha++;
+        effort = getEstimatedRequiredSamples();
     }
 
     void failurePropagation() {
         beta++;
+        effort = getEstimatedRequiredSamples();
     }
 
     double getEstimatedRequiredSamples() const {
@@ -79,11 +77,10 @@ class AbstractEdge {
         return estimate;
     }
 
-    double getHypotheticalEstimatedSamplesAfterPositivePropagation(unsigned int numberOfStates) const {
-        double additive = (1. / (double)numberOfStates);
-        double probability = (alpha + additive) / (alpha + additive + beta);
-        double estimate = 1. / probability;
-        return estimate;
+    double getEffortWithBonus() const {
+        // double probability = (alpha + 1) / (alpha + beta + 1);
+        // double estimate = 1. / probability;
+        return 1.0;
     }
 
     void rewardHypotheticalSamplesAfterPositivePropagation(unsigned int numberOfStates) {
@@ -93,15 +90,22 @@ class AbstractEdge {
 
     
     void updateEdgeCost(double _cost){
-        if(std::isinf(cost)){
-            cost = _cost;
-            motionNum = 1;
-        }
-        else{
-            cost = (cost * motionNum + _cost) / (motionNum + 1);
-            motionNum++;
-        }
+        assert(_cost >= 0);
+        cost = (cost * motionsNum + _cost) / (double)(motionsNum + 1);
+        motionsNum++;
+        epsilon = cost / abstractCost;
         // we do nothing when we remove a state
+    }
+
+    void setAbstractCost(double _cost){
+        assert(_cost >= 0);
+        abstractCost = _cost;
+        cost = _cost;
+    }
+
+    double getCost(double epsilonBar){
+        if(motionsNum == 1) return epsilonBar * abstractCost;
+        return cost;
     }
 
     unsigned int startID, endID, interiorToNextEdgeID;
@@ -113,11 +117,11 @@ class AbstractEdge {
 
     double effort = std::numeric_limits<double>::infinity();
     double cost = std::numeric_limits<double>::infinity();
-    int motionsNum = 0;
-    
+    double abstractCost = std::numeric_limits<double>::infinity();
+    int motionsNum = 1;
+    double epsilon = 1;
 	
     bool interior = false;
-    BetaDistribution costReductionSuccess;
 };
 
 double AbstractEdge::validEdgeDistributionAlpha = 0;
