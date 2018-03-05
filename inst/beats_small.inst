@@ -1,0 +1,65 @@
+Timeout ? 60
+
+Memory ? 1000
+
+AddIntermediateStates ? true
+
+Seed ? 2
+
+Runs ? 1
+
+Domain ? Quadrotor
+ 
+PropagationStepSize ? 0.05
+
+MinControlDuration ? 1
+
+MaxControlDuration ? 100
+
+GoalRadius ? 1
+
+Start ? 3 -5
+
+Goal ? 0 -25
+
+EnvironmentBounds ? -30 30 -30 30 
+
+EnvironmentMesh ? forest.dae
+
+AgentMesh ? car2_planar_robot.dae
+
+Planner ? BEATS
+ 
+AbstractionType ? PRM
+
+NumEdges ? 3
+
+PRMSize ? 1000
+
+StateRadius ? 6
+
+WhichSearch ? D*
+
+ValidEdgeDistributionAlpha ? 10
+
+ValidEdgeDistributionBeta ? 1
+
+InvalidEdgeDistributionAlpha ? 1
+
+InvalidEdgeDistributionBeta ? 10
+
+SelectionRadius ? 2.0
+
+PruningRadius ? 1.0
+
+N0 ? 100000
+
+Xi ? 0.5
+
+SSTStyle ? SSTStar
+
+CostPruningStyle ? G
+
+Sampler ? BEATS
+
+Output ? outfile-beats-small
