@@ -37,6 +37,7 @@ GlobalParameters globalParameters;
 #include "planners/SST.hpp"
 #include "planners/beastplanner.hpp"
 #include "planners/beastplannernew.hpp"
+#include "planners/beastplannerUpdateRightEdge.hpp"
 #include "planners/beastplannergeometric.hpp"
 
 #include "planners/sststar.hpp"
@@ -76,6 +77,8 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else if(planner.compare("BEASTnew") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
+  } else if(planner.compare("BEASTUpdateRightEdge") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannerUpdateRightEdge(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else if(planner.compare("UCTtest") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::UCTPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   }
