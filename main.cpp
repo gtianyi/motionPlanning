@@ -39,6 +39,7 @@ GlobalParameters globalParameters;
 #include "planners/beastplannernew.hpp"
 #include "planners/beastplannerUpdateRightEdge.hpp"
 #include "planners/beastplannergeometric.hpp"
+#include "planners/beats_planner.hpp"
 
 #include "planners/sststar.hpp"
 #include "planners/restartingrrtwithpruning.hpp"
@@ -46,59 +47,62 @@ GlobalParameters globalParameters;
 #include "planners/anytimebeastcostplanner.hpp"
 #include "planners/anytimebeastplannernew.hpp"
 #include "planners/uctplanner.hpp"
-#include "planners/atemptsplanner.hpp"
+//#include "planners/atemptsplanner.hpp"
 
 
 void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
   auto planner = params.stringVal("Planner");
 
   ompl::base::PlannerPtr plannerPointer;
-  if(planner.compare("RRT") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::RRT( benchmarkData.simplesetup->getSpaceInformation()));
+    const auto spaceInformation = benchmarkData.simplesetup->getSpaceInformation();
+    if(planner.compare("RRT") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::RRT(spaceInformation));
     // plannerPointer = ompl::base::PlannerPtr(new ompl::control::RRTLocal(benchmarkData.simplesetup->getSpaceInformation()));
   } else if(planner.compare("KPIECE") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::KPIECE1(benchmarkData.simplesetup->getSpaceInformation()));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::KPIECE1(spaceInformation));
     // plannerPointer = ompl::base::PlannerPtr(new ompl::control::KPIECELocal(benchmarkData.simplesetup->getSpaceInformation()));
   } else if(planner.compare("EST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::EST(benchmarkData.simplesetup->getSpaceInformation()));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::EST(spaceInformation));
   } else if(planner.compare("SyclopRRT") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SyclopRRT(benchmarkData.simplesetup->getSpaceInformation(), benchmarkData.decomposition));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SyclopRRT(spaceInformation, benchmarkData.decomposition));
   } else if(planner.compare("SyclopEST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SyclopEST(benchmarkData.simplesetup->getSpaceInformation(), benchmarkData.decomposition));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SyclopEST(spaceInformation, benchmarkData.decomposition));
   } else if(planner.compare("PDST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::PDST(benchmarkData.simplesetup->getSpaceInformation()));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::PDST(spaceInformation));
   } else if(planner.compare("FBiasedRRT") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::FBiasedRRT(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::FBiasedRRT(spaceInformation, params));
   } else if(planner.compare("FBiasedShellRRT") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::FBiasedShellRRT(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::FBiasedShellRRT(spaceInformation, params));
   } else if(planner.compare("PlakuRRT") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::PlakuRRT(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::PlakuRRT(spaceInformation, params));
   } else if(planner.compare("BEAST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner(spaceInformation, params));
   } else if(planner.compare("BEASTnew") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannernew(spaceInformation, params));
   } else if(planner.compare("BEASTUpdateRightEdge") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannerUpdateRightEdge(benchmarkData.simplesetup->getSpaceInformation(), params));
-  } else if(planner.compare("UCTtest") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::UCTPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannerUpdateRightEdge(spaceInformation, params));
+  }else if(planner.compare("UCTtest") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::UCTPlanner(spaceInformation, params));
+  } else if(planner.compare("BEATS") == 0) {
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeatsPlanner(spaceInformation, params));
   }
 
   /* anytime planners */
   else if(planner.compare("SST") == 0) {
     // plannerPointer = ompl::base::PlannerPtr(new ompl::control::SST(benchmarkData.simplesetup->getSpaceInformation()));;
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SSTLocal(benchmarkData.simplesetup->getSpaceInformation(), params));;
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SSTLocal(spaceInformation, params));;
   } else if(planner.compare("SST*") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SSTStar(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::SSTStar(spaceInformation, params));
   } else if(planner.compare("RestartingRRTWithPruning") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::RestartingRRTWithPruning(benchmarkData.simplesetup->getSpaceInformation()));
-  } else if(planner.compare("AnytimeBEAST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
-  } else if(planner.compare("AnytimeBEASTCost") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastCostPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
-  } else if(planner.compare("AnytimeBEASTnew") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
-  } else if(planner.compare("Atempts") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AtemptsPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+    plannerPointer = ompl::base::PlannerPtr(new ompl::control::RestartingRRTWithPruning(spaceInformation));
+//  } else if(planner.compare("AnytimeBEAST") == 0) {
+//    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+//  } else if(planner.compare("AnytimeBEASTCost") == 0) {
+//    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastCostPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
+//  } else if(planner.compare("AnytimeBEASTnew") == 0) {
+//    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AnytimeBeastPlannernew(benchmarkData.simplesetup->getSpaceInformation(), params));
+//  } else if(planner.compare("Atempts") == 0) {
+//    plannerPointer = ompl::base::PlannerPtr(new ompl::control::AtemptsPlanner(benchmarkData.simplesetup->getSpaceInformation(), params));
   } else {
     fprintf(stderr, "unrecognized planner\n");
     return;
@@ -120,8 +124,19 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
   req.displayProgress = true;
   req.saveConsoleOutput = false;
 
+  std::cout << "Do benchmark\n";
+  
   benchmarkData.benchmark->benchmark(req);
+
+  std::cout << "Save to file\n";
+
   benchmarkData.benchmark->saveResultsToFile(params.stringVal("Output").c_str());
+  
+  std::cout << "Results: \n";
+  
+  benchmarkData.benchmark->saveResultsToStream();
+  
+  std::cout << std::endl;
 
   // If there were multiple solutions being logged to global parameters, append them to the output file
   // for some reason the OMPL benchmarking doesn't include all the solutions added, just the final one
