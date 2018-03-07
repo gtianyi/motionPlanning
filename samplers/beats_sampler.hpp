@@ -10,8 +10,8 @@ namespace base {
 class BeatsSampler: public ompl::base::BeastSamplerBase {
     struct VertexWrapper {
         VertexWrapper(Vertex* vertex)
-            : vertex(vertex),
-              currentParent(NULL) {}
+                : vertex(vertex),
+                  currentParent(NULL) {}
 
         virtual ~VertexWrapper() {
             for (auto p : parents) {
@@ -44,8 +44,8 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
 
         struct Parent {
             Parent(unsigned int parent, double cost)
-                : parent(parent),
-                  cost(cost) {}
+                    : parent(parent),
+                      cost(cost) {}
             static bool HeapCompare(const Parent* r1, const Parent* r2) {
                 return r1->cost < r2->cost;
             }
@@ -101,7 +101,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         std::vector<Parent*> parents;
         Parent* currentParent;
     };
-public:
+  public:
     BeatsSampler(ompl::base::SpaceInformation* base, ompl::base::State* start, const ompl::base::GoalPtr& goal,
                  base::GoalSampleableRegion* gsr, const FileMap& params) : BeastSamplerBase(base,
                                                                                             start,
@@ -127,13 +127,9 @@ public:
             }
         }
 
-        vertices[goalID].rhs = 0;
-        vertices[goalID].key = calculateKey(goalID);
-        U.push(&vertices[goalID]);
-
         {
             Timer t("D* lite");
-            computeShortestPath();
+            computeShortestPathWithThompsonSampling();
         }
 
         for (auto eset : edges) {
@@ -150,18 +146,10 @@ public:
 #ifdef STREAM_GRAPHICS
         static unsigned int sampleCount = 0;
         if(sampleCount++ % 100 == 0) {
-            // fprintf(stderr, "open: %u\n", open.getFill());
-            // writeVertexFile(sampleCount / 1000);
-            // writeOpenEdgeFile(sampleCount / 1000);
-            // writeUpdatedEdgeFile(sampleCount / 10);
             writeEdgeFile(sampleCount / 100, 1);
         }
 #endif
-        thompsonSampleInitialization();
-        computeShortestPath();
-
-        if (targetEdge != NULL) { //only will fail the first time through
-
+        if (targetEdge != NULL) {
             if (targetSuccess) {
                 if (!addedGoalEdge && targetEdge->endID == goalID) {
                     Edge* goalEdge = new Edge(goalID, goalID);
@@ -180,13 +168,15 @@ public:
                     targetEdge->succesfulPropagation();
                     updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
                 }
-            } else {
+            }
+            else {
                 targetEdge->failurePropagation();
-                updateEdgeEffort(targetEdge, targetEdge->getEstimatedRequiredSamples() + vertices[targetEdge->endID].g);
+                updateEdgeEffort(targetEdge,
+                                 targetEdge->getEstimatedRequiredSamples()
+                                 + vertices[targetEdge->endID].g);
             }
 
-            updateVertex(targetEdge->startID);
-            computeShortestPath();
+            computeShortestPathWithThompsonSampling();
 
             if (targetSuccess) {
                 addOutgoingEdgesToOpen(targetEdge->endID);
@@ -201,15 +191,12 @@ public:
 
             if (targetEdge->status == Abstraction::Edge::UNKNOWN) {
                 Abstraction::Edge::CollisionCheckingStatus status =
-                    abstraction->isValidEdge(targetEdge->startID, targetEdge->endID) ? Abstraction::Edge::VALID :
-                    Abstraction::Edge::INVALID;
+                        abstraction->isValidEdge(targetEdge->startID,
+                                                 targetEdge->endID) ?
+                        Abstraction::Edge::VALID :
+                        Abstraction::Edge::INVALID;
                 targetEdge->updateEdgeStatusKnowledge(status);
-
-                //yes this looks weird but we need it for right now to do some debugging
-                updateEdgeEffort(targetEdge, targetEdge->effort);
-
-                updateVertex(targetEdge->startID);
-                computeShortestPath();
+                computeShortestPathWithThompsonSampling();
             } else {
                 getNextEdge = false;
             }
@@ -217,23 +204,22 @@ public:
 
         targetSuccess = false;
 
-        if (targetEdge->startID == targetEdge->endID && targetEdge->startID == goalID) {
+        if (targetEdge->startID == targetEdge->endID &&
+            targetEdge->startID == goalID) {
             si_->copyState(from, vertices[targetEdge->startID].sampleState());
             goalSampler->sampleGoal(to);
-        } else {
+        }
+        else {
             si_->copyState(from, vertices[targetEdge->startID].sampleState());
-            ompl::base::ScopedState<>
-                vertexState(globalParameters.globalAppBaseControl->getGeometricComponentStateSpace());
-            // guty: need to use globalAppBaseGeometric for linkage
-            if (abstraction->supportsSampling()) {
-                vertexState = abstraction->sampleAbstractState(targetEdge->endID);
-            } else {
-                vertexState = abstraction->getState(targetEdge->endID);
-                ompl::base::ScopedState<>
-                    fullState = globalParameters.globalAppBaseControl->getFullStateFromGeometricComponent(vertexState);
-                fullStateSampler->sampleUniformNear(to, fullState.get(), stateRadius);
-                // guty: add a sampler for linkage here
-            }
+            ompl::base::ScopedState<>vertexState(
+                globalParameters.globalAppBaseControl->
+                getGeometricComponentStateSpace());
+           
+            vertexState = abstraction->getState(targetEdge->endID);
+            ompl::base::ScopedState<> fullState =
+                    globalParameters.globalAppBaseControl->
+                    getFullStateFromGeometricComponent(vertexState);
+            fullStateSampler->sampleUniformNear(to, fullState.get(), stateRadius);
         }
         return true;
     }
@@ -242,7 +228,9 @@ public:
         throw ompl::Exception("NewSampler::sample", "not implemented");
     }
 
-    virtual bool sampleNear(ompl::base::State*, const ompl::base::State*, const double) {
+    virtual bool sampleNear(ompl::base::State*,
+                            const ompl::base::State*,
+                            const double) {
         throw ompl::Exception("NewSampler::sampleNear", "not implemented");
     }
 
@@ -263,49 +251,7 @@ public:
     }
 
 
-protected:
-    void vertexMayBeInconsistent(unsigned int id) {
-        updateVertex(id);
-    }
-
-    void vertexHasInfiniteValue(unsigned int id) {
-        computeShortestPath();
-    }
-
-
-    Key calculateKey(unsigned int id) {
-        Vertex& s = vertices[id];
-        Key key;
-        key.first = std::min(s.g, s.rhs);
-        key.second = std::min(s.g, s.rhs);
-        return key;
-    }
-
-    void updateVertex(unsigned int id) {
-        Vertex& s = vertices[id];
-        if (s.id != goalID) {
-            double minValue = std::numeric_limits<double>::infinity();
-            auto neighbors = abstraction->getNeighboringCells(id);
-            for (auto n : neighbors) {
-                Edge* e = getEdge(id, n);
-                double value = vertices[n].g + e->getEstimatedRequiredSamples();
-                if (value < minValue) {
-                    minValue = value;
-                }
-            }
-            s.rhs = minValue;
-        }
-
-        if (U.inHeap(&vertices[id])) {
-            U.remove(&vertices[id]);
-        }
-
-        if (s.g != s.rhs) {
-            s.key = calculateKey(id);
-            U.push(&vertices[id]);
-        }
-    }
-
+  protected:
     double sampleEffort(const Edge* edge) {
         double a = std::gamma_distribution<double>(edge->alpha, 1.0)(randomNumberGenerator);
         double b = std::gamma_distribution<double>(edge->beta, 1.0)(randomNumberGenerator);
@@ -314,57 +260,42 @@ protected:
         return (a + b) / a;
     }
 
-    void thompsonSampleInitialization() {
-        // Sample effort for all edges 
-        for (auto eset : edges) {
-            for (auto edgePair : eset.second) {
-                Edge* edge = edgePair.second;
-                updateEdgeEffort(edge, sampleEffort(edge), false);
+    void computeShortestPathWithThompsonSampling() {
+        std::vector<VertexWrapper *>wrappers;
+        wrappers.reserve(vertices.size());
+        for (auto &v : vertices){
+            wrappers.emplace_back(new VertexWrapper(&v));
+        }
+        InPlaceBinaryHeap<VertexWrapper, VertexWrapper> open;
+        int closed[vertices.size()] = { -1};
+        wrappers[goalID]->setVal(0);
+        open.push(wrappers[goalID]);
+        while( !open.isEmpty()){
+            VertexWrapper * current = open.pop();
+            closed[current->getId()] = 1;
+            std::vector<unsigned int> kids =
+                    abstraction->getNeighboringCells(current->getId());
+            for (auto & kid: kids){
+                Edge *e = getEdge(kid, current->getId());
+                double effort = current->getVal() + sampleEffort(e);
+                if(closed[kid] == -1){
+                    wrappers[kid]->setVal(effort);
+                    open.push(wrappers[kid]);
+                    updateEdgeEffort(e, effort);
+                }
             }
+        }
+        for (auto v : wrappers){
+            delete v;
         }
     }
 
-    void computeShortestPath() {
-        while (!U.isEmpty()) {
-            Vertex& currentVertex = vertices[U.pop()->id];
-            Key k_old = currentVertex.key;
-            Key k_new = calculateKey(currentVertex.id);
+    void vertexMayBeInconsistent(unsigned int id){
+        computeShortestPathWithThompsonSampling();
+    }
 
-            if (k_old < k_new) {
-                currentVertex.key = k_new;
-                U.push(&vertices[currentVertex.id]);
-            } else if (currentVertex.g > currentVertex.rhs) {
-                currentVertex.g = currentVertex.rhs;
-                for (auto e : reverseEdges[currentVertex.id]) {
-                    if (e.second->interior) {
-                        updateEdgeEffort(e.second, getInteriorEdgeEffort(e.second), false);
-                    } else {
-                        updateEdgeEffort(e.second, currentVertex.g + e.second->getEstimatedRequiredSamples(), false);
-                    }
-                }
-
-                auto neighbors = getNeighboringCells(currentVertex.id);
-                for (auto n : neighbors) {
-                    updateVertex(n);
-                }
-            } else {
-                currentVertex.g = std::numeric_limits<double>::infinity();
-
-                for (auto e : reverseEdges[currentVertex.id]) {
-                    if (e.second->interior) {
-                        updateEdgeEffort(e.second, getInteriorEdgeEffort(e.second), false);
-                    } else {
-                        updateEdgeEffort(e.second, currentVertex.g, false);
-                    }
-                }
-
-                updateVertex(currentVertex.id);
-                auto neighbors = abstraction->getNeighboringCells(currentVertex.id);
-                for (auto n : neighbors) {
-                    updateVertex(n);
-                }
-            }
-        }
+    void vertexHasInfiniteValue(unsigned int id){
+        computeShortestPathWithThompsonSampling();
     }
 
     bool addedGoalEdge;

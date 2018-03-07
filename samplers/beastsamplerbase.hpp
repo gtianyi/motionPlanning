@@ -99,7 +99,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
 
         // add by tianyi, Aug / 8 / 2017
         ompl::base::State* sampleStateByDis(const ompl::base::SpaceInformation *si_,
-                                       ompl::base::State* targetState) {
+                                            ompl::base::State* targetState) {
             double bestDis = std::numeric_limits<double>::infinity();
             ompl::base::State* ret;
             StateWrapper * bestState;
@@ -219,8 +219,12 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
     };
 
   public:
-    BeastSamplerBase(ompl::base::SpaceInformation *base, ompl::base::State *start, const ompl::base::GoalPtr &goal,
-                     base::GoalSampleableRegion *gsr, const FileMap &params) : AbstractionBasedSampler(base, start, goal, params), goalSampler(gsr) {
+    BeastSamplerBase(ompl::base::SpaceInformation *base,
+                     ompl::base::State *start,
+                     const ompl::base::GoalPtr &goal,
+                     ompl::base::GoalSampleableRegion *gsr,
+                     const FileMap &params) :
+            AbstractionBasedSampler(base, start, goal, params), goalSampler(gsr) {
 
         startState = base->allocState();
         si_->copyState(startState, start);
@@ -385,9 +389,10 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
 
     virtual bool sample(ompl::base::State *, ompl::base::State *) = 0;
     virtual bool sample(ompl::base::State *) = 0;
-    virtual bool sampleNear(ompl::base::State *, const ompl::base::State *, const double) = 0;
+    virtual bool sampleNear(ompl::base::State*, const ompl::base::State *, const double) = 0;
     virtual void reached(ompl::base::State *) = 0;
 
+                            
   protected:
 
     virtual void vertexMayBeInconsistent(unsigned int) = 0;
