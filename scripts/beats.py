@@ -75,9 +75,9 @@ def process_log(log_lines):
 
 def assemble_experiments(configurations):
     command_template = 'export LD_LIBRARY_PATH=/home/aifs1/gu/lib:$LD_LIBRARY_PATH &&' \
-                       'cd /home/aifs1/gu/gopath/src/github.com/skiesel/moremotionplanning/build/ &&' \
+                       'cd /home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build/ &&' \
                        'printf "{configuration}" | ' \
-                       '/home/aifs1/gu/gopath/src/github.com/skiesel/moremotionplanning/build/MotionPlanning'
+                       '/home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build/MotionPlanning'
 
     return [Experiment(configuration_parser.parse_configuration(configuration),
                        command_template.format(configuration=configuration))

@@ -128,7 +128,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         {
-            Timer t("D* lite");
+            Timer t("ThompsonSampling - beast");
             computeShortestPathWithThompsonSampling();
         }
 
@@ -182,7 +182,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
                 addOutgoingEdgesToOpen(targetEdge->endID);
             }
         }
-
+        
         bool getNextEdge = true;
         while (getNextEdge) {
             assert(!open.isEmpty());
@@ -203,7 +203,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         targetSuccess = false;
-
+        std::cout << "edge:" <<targetEdge.startID <<" "<<targetEdge.endID << std::endl;
         if (targetEdge->startID == targetEdge->endID &&
             targetEdge->startID == goalID) {
             si_->copyState(from, vertices[targetEdge->startID].sampleState());
@@ -256,7 +256,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         double a = std::gamma_distribution<double>(edge->alpha, 1.0)(randomNumberGenerator);
         double b = std::gamma_distribution<double>(edge->beta, 1.0)(randomNumberGenerator);
         assert(a != 0.0);
-        assert(b != 0.0);
+        assert(b != 0.0); 
         return (a + b) / a;
     }
 
