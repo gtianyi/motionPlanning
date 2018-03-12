@@ -203,7 +203,8 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         targetSuccess = false;
-        std::cout << "edge:" <<targetEdge.startID <<" "<<targetEdge.endID << std::endl;
+        // guty: we are here trying to see stuck where,  need better visualization
+        std::cout << "edge:" <<targetEdge->startID <<" "<<targetEdge->endID << std::endl;
         if (targetEdge->startID == targetEdge->endID &&
             targetEdge->startID == goalID) {
             si_->copyState(from, vertices[targetEdge->startID].sampleState());
@@ -248,6 +249,11 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         } else {
             addOutgoingEdgesToOpen(newCellId);
         }
+    }
+
+    void reachedFromState(ompl::base::State* from,
+                          ompl::base::State* to){
+        return;
     }
 
 

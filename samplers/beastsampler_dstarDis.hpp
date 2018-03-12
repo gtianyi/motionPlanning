@@ -161,7 +161,6 @@ class BeastSampler_dstarDis : public ompl::base::BeastSamplerBase {
         }
     }
 
-
   protected:
     void vertexMayBeInconsistent(unsigned int id) {
         updateVertex(id);

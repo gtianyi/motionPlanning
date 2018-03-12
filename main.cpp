@@ -128,9 +128,10 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
   
   benchmarkData.benchmark->benchmark(req);
 
-  std::cout << "Save to file\n";
-
-  benchmarkData.benchmark->saveResultsToFile(params.stringVal("Output").c_str());
+  // save ompl output file to some place,
+  // we don't need this for new experiment system
+  // Mar - 11 - 2018,  by Tianyi Gu
+  // benchmarkData.benchmark->saveResultsToFile(params.stringVal("Output").c_str());
   
   std::cout << "Results: \n";
   

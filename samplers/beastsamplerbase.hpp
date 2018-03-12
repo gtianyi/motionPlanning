@@ -391,8 +391,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
     virtual bool sample(ompl::base::State *) = 0;
     virtual bool sampleNear(ompl::base::State*, const ompl::base::State *, const double) = 0;
     virtual void reached(ompl::base::State *) = 0;
-
-                            
+                                
   protected:
 
     virtual void vertexMayBeInconsistent(unsigned int) = 0;

@@ -145,7 +145,7 @@ public:
 	}
 
 	void reached(ompl::base::State *state) {
-		ompl::base::ScopedState<> incomingState(si_->getStateSpace());
+            ompl::base::ScopedState<> incomingState(si_->getStateSpace());
 		incomingState = state;
 		unsigned int newCellId = abstraction->mapToAbstractRegion(incomingState);
 
@@ -159,7 +159,6 @@ public:
 			addOutgoingEdgesToOpen(newCellId);
 		}
 	}
-
 
 protected:
 	void vertexMayBeInconsistent(unsigned int id) {
@@ -251,6 +250,7 @@ protected:
 	}
 
 	bool addedGoalEdge;
+    int reachcount = 0;
 };
 
 }
