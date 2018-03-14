@@ -17,6 +17,7 @@ __author__ = 'Bence Cserna (bence@cserna.net)'
 
 HOSTS = ['ai' + str(i) + '.cs.unh.edu' for i in [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15]]
 
+
 class Experiment:
     def __init__(self, configuration, command):
         self.configuration = configuration
@@ -26,6 +27,8 @@ class Experiment:
 
 
 def process_log(log_lines):
+    """Process output of OMPL/motionPlanner and return a dictionary with the relevant values."""
+
     log_lines = [line.strip() for line in log_lines]
 
     save_header = False
@@ -74,6 +77,8 @@ def process_log(log_lines):
 
 
 def assemble_experiments(configurations):
+    """Set up executable commands for the given list of experiments."""
+
     command_template = 'export LD_LIBRARY_PATH=/home/aifs1/gu/lib:$LD_LIBRARY_PATH &&' \
                        'cd /home/aifs1/gu/gopath/src/github.com/skiesel/moremotionplanning/build/ &&' \
                        'printf "{configuration}" | ' \
@@ -115,10 +120,6 @@ def spawn_ssh_client(hostname):
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     client.connect(hostname=hostname, pkey=key)
     return client
-
-
-def ssh_execute_configuration(command, configuration, client):
-    client.exec_command(command)
 
 
 def execute_configuration(configuration, timeout=100000):
