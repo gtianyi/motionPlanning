@@ -128,7 +128,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         {
-            Timer t("D* lite");
+            Timer t("ThompsonSampling - beast");
             computeShortestPathWithThompsonSampling();
         }
 
@@ -139,7 +139,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         vertices[startID].addState(startState);
-        addOutgoingEdgesToOpen(startID);
+        addOutgoingEdgesToOpenTS(startID);
     }
 
     virtual bool sample(ompl::base::State* from, ompl::base::State* to) {
@@ -158,31 +158,31 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
                     open.push(goalEdge);
                     addedGoalEdge = true;
                 }
-
-                if (targetEdge->interior) {
-                    updateSuccesfulInteriorEdgePropagation(targetEdge);
-                    updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
-                } else {
-                    //edge has become interior
-                    targetEdge->interior = true;
-                    targetEdge->succesfulPropagation();
-                    updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
-                }
+                targetEdge->succesfulPropagation();
+                // if (targetEdge->interior) {
+                //     updateSuccesfulInteriorEdgePropagation(targetEdge);
+                //     updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
+                // } else {
+                //     //edge has become interior
+                //     targetEdge->interior = true;
+                //     targetEdge->succesfulPropagation();
+                //     updateEdgeEffort(targetEdge, getInteriorEdgeEffort(targetEdge));
+                // }
             }
             else {
                 targetEdge->failurePropagation();
-                updateEdgeEffort(targetEdge,
-                                 targetEdge->getEstimatedRequiredSamples()
-                                 + vertices[targetEdge->endID].g);
+                // updateEdgeEffort(targetEdge,
+                //                  targetEdge->getEstimatedRequiredSamples()
+                //                  + vertices[targetEdge->endID].g);
             }
 
             computeShortestPathWithThompsonSampling();
 
             if (targetSuccess) {
-                addOutgoingEdgesToOpen(targetEdge->endID);
+                addOutgoingEdgesToOpenTS(targetEdge->endID);
             }
         }
-
+        
         bool getNextEdge = true;
         while (getNextEdge) {
             assert(!open.isEmpty());
@@ -203,7 +203,8 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         }
 
         targetSuccess = false;
-
+        // guty: we are here trying to see stuck where,  need better visualization
+        // std::cout << "edge:" <<targetEdge->effort << std::endl;
         if (targetEdge->startID == targetEdge->endID &&
             targetEdge->startID == goalID) {
             si_->copyState(from, vertices[targetEdge->startID].sampleState());
@@ -245,9 +246,15 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         if (targetEdge != NULL && newCellId == targetEdge->endID) {
             //this region will be added to open when sample is called again
             targetSuccess = true;
-        } else {
-            addOutgoingEdgesToOpen(newCellId);
         }
+        // else {
+        //     addOutgoingEdgesToOpen(newCellId);
+        // }
+    }
+
+    void reachedFromState(ompl::base::State* from,
+                          ompl::base::State* to){
+        return;
     }
 
 
@@ -256,7 +263,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         double a = std::gamma_distribution<double>(edge->alpha, 1.0)(randomNumberGenerator);
         double b = std::gamma_distribution<double>(edge->beta, 1.0)(randomNumberGenerator);
         assert(a != 0.0);
-        assert(b != 0.0);
+        assert(b != 0.0); 
         return (a + b) / a;
     }
 
@@ -266,22 +273,23 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         for (auto &v : vertices){
             wrappers.emplace_back(new VertexWrapper(&v));
         }
-        InPlaceBinaryHeap<VertexWrapper, VertexWrapper> open;
-        int closed[vertices.size()] = { -1};
+        InPlaceBinaryHeap<VertexWrapper, VertexWrapper> openList;
+        int closed[vertices.size()] = {0};
         wrappers[goalID]->setVal(0);
-        open.push(wrappers[goalID]);
-        while( !open.isEmpty()){
-            VertexWrapper * current = open.pop();
+        openList.push(wrappers[goalID]);
+        int count = 0;
+        while( !openList.isEmpty()){
+            VertexWrapper * current = openList.pop();
             closed[current->getId()] = 1;
             std::vector<unsigned int> kids =
                     abstraction->getNeighboringCells(current->getId());
             for (auto & kid: kids){
                 Edge *e = getEdge(kid, current->getId());
                 double effort = current->getVal() + sampleEffort(e);
-                if(closed[kid] == -1){
+                if(closed[kid] == 0){
                     wrappers[kid]->setVal(effort);
-                    open.push(wrappers[kid]);
-                    updateEdgeEffort(e, effort);
+                    openList.push(wrappers[kid]);
+                    e->effort = effort;
                 }
             }
         }

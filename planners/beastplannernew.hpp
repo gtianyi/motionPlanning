@@ -7,8 +7,7 @@
 
 #include "../structs/filemap.hpp"
 
-#include "../samplers/beastsampler_dstar.hpp"
-#include "../samplers/beastsampler_dijkstra.hpp"
+#include "../samplers/beastsampler_dstarUpdateRightEdge.hpp"
 #include "../samplers/beastsampler_dstarDis.hpp"
 #include <limits>
 
@@ -92,20 +91,10 @@ class BeastPlannernew : public ompl::control::RRT {
         if(!newsampler_) {
             auto start = clock();
 
-            if(whichSearch.compare("D*") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dstar((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                 goal_s, params);
-                std::cout << "start state ============ ";
-                si_->printState(pdef_->getStartState(0), std::cout);
-            } else if(whichSearch.compare("Dijkstra") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dijkstra((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                    goal_s, params);
-            } else if(whichSearch.compare("D*Dis") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dstarDis((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                    goal_s, params);
-            } else {
-                throw ompl::Exception("Unrecognized best first search type", whichSearch.c_str());
-            }
+           
+
+            // newsampler_ = new ompl::base::BeastSampler_dstarDis((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(), goal_s, params);
+            newsampler_ = new ompl::base::BeastSampler_dstarUpdateRightEdge((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(), goal_s, params);
 		
 
             newsampler_->initialize();
@@ -180,7 +169,7 @@ class BeastPlannernew : public ompl::control::RRT {
                         motion->state = pstates[p];
 
                         newsampler_->reached(pstates[p]);
-
+                       
 #ifdef STREAM_GRAPHICS
                         streamPoint(pstates[p], 1, 0, 0, 1);
 #endif
@@ -224,7 +213,7 @@ class BeastPlannernew : public ompl::control::RRT {
                     motion->parent = nmotion;
 
                     newsampler_->reached(motion->state);
-
+                    
 #ifdef STREAM_GRAPHICS
                     streamPoint(nmotion->state, 1, 0, 0, 1);
                     streamPoint(motion->state, 1, 0, 0, 1);
@@ -245,7 +234,6 @@ class BeastPlannernew : public ompl::control::RRT {
                 }
             }
         }
-
         bool solved = false;
         bool approximate = false;
         if(solution == NULL) {
@@ -280,9 +268,11 @@ class BeastPlannernew : public ompl::control::RRT {
             siC_->freeControl(rmotion->control);
         delete rmotion;
         si_->freeState(xstate);
+        OMPL_INFORM("%s: Created %u states",
+                    getName().c_str(),
+                    nn_->size());
 
-        OMPL_INFORM("%s: Created %u states", getName().c_str(), nn_->size());
-
+        std::cout << "return solve\n";
         return base::PlannerStatus(solved, approximate);
     }
 

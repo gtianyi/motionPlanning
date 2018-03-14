@@ -67,7 +67,7 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
 
         if(targetEdge != NULL) { //only will fail the first time through
 
-           for (const auto &e : edgesNeedUpdate){
+           for (const auto &e : successEdgesNeedUpdate){
                 if(!addedGoalEdge && e->endID == goalID) {
                     Edge *goalEdge = new Edge(goalID, goalID);
                     goalEdge->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
@@ -91,15 +91,15 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
            }
                
            if( !targetSuccess ){
-               realTargetEdge->failurePropagation();
-               updateEdgeEffort(realTargetEdge,
-                                realTargetEdge->getEstimatedRequiredSamples()      
-                                + vertices[realTargetEdge->endID].g);
+               targetEdge->failurePropagation();
+               updateEdgeEffort(targetEdge,
+                                targetEdge->getEstimatedRequiredSamples()
+                                + vertices[targetEdge->endID].g);
            }
            
            computeShortestPath();
 
-           for (const auto &e : edgesNeedUpdate){
+           for (const auto &e : successEdgesNeedUpdate){
                 addOutgoingEdgesToOpen(e->endID);
            }
         }
@@ -127,11 +127,15 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
 
         targetSuccess = false;
 
-        if(targetEdge->startID == targetEdge->endID && targetEdge->startID == goalID) {
-            si_->copyState(from, vertices[targetEdge->startID].sampleState());
-            goalSampler->sampleGoal(to);
+        if(targetEdge->startID == targetEdge->endID &&
+           targetEdge->startID == goalID) {
+               goalSampler->sampleGoal(to);
+               si_->copyState(from,
+                              vertices[targetEdge->startID].
+                              sampleStateByDis(si_, to));
+         
         } else {
-            si_->copyState(from, vertices[targetEdge->startID].sampleState());
+            
             ompl::base::ScopedState<> vertexState(globalParameters.globalAppBaseControl->getGeometricComponentStateSpace());
             // guty: need to use globalAppBaseGeometric for linkage
             if(abstraction->supportsSampling()) {
@@ -142,12 +146,12 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
                 fullStateSampler->sampleUniformNear(to, fullState.get(), stateRadius);
                 // guty: add a sampler for linkage here
             }
+            si_->copyState(from,
+                           vertices[targetEdge->startID].sampleStateByDis(si_, to));
         }
-
-        realTargetEdge = NULL;
         prevRegion = -1;
         currRegion = -1;
-        edgesNeedUpdate.clear();
+        successEdgesNeedUpdate.clear();
         return true;
     }
 
@@ -156,37 +160,31 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
         return false;
     }
 
-    virtual bool sampleNear(ompl::base::State *, const ompl::base::State *, const double) {
+    virtual bool sampleNear(ompl::base::State *,
+                            const ompl::base::State *,
+                            const double) {
         throw ompl::Exception("NewSampler::sampleNear", "not implemented");
         return false;
     }
 
     void reached(ompl::base::State *state){
-        return;
-    }
-
-    void reachedFromTree(ompl::base::State *state_from,
-                         ompl::base::State *state_to) {
-        ompl::base::ScopedState<> incomingState_from(si_->getStateSpace());
         ompl::base::ScopedState<> incomingState_to(si_->getStateSpace());
-        incomingState_from = state_from;
-        incomingState_to = state_to;
-        unsigned int CellId_from = abstraction->
-                mapToAbstractRegion(incomingState_from);
-        unsigned int CellId_to = abstraction->mapToAbstractRegion(incomingState_to);
+        incomingState_to = state;
+        unsigned int CellId_from = targetEdge->startID;
+        unsigned int CellId_to = abstraction->
+                mapToAbstractRegion(incomingState_to);
         
-        vertices[CellId_to].addState(state_to);
+        vertices[CellId_to].addState(state);
         if(currRegion != CellId_to){
             prevRegion = currRegion == -1 ? CellId_from : currRegion;
             currRegion = CellId_to;
             Edge *e = getEdge(prevRegion, currRegion);
-            if(realTargetEdge != NULL && CellId_to == realTargetEdge->endID){
+            successEdgesNeedUpdate.insert(e);
+            if(targetEdge != NULL && CellId_to == targetEdge->endID){
                 targetSuccess = true;
+                successEdgesNeedUpdate.insert(targetEdge);
             }
-            else{
-                edgesNeedUpdate.push_back(e);
-                addOutgoingEdgesToOpen(CellId_to);
-            }
+           
         }
     }
 
@@ -199,7 +197,7 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
         unsigned int CellId_from = abstraction->
                 mapToAbstractRegion(incomingState_from);
         unsigned int CellId_to = abstraction->mapToAbstractRegion(incomingState_to);
-        realTargetEdge = getEdge(CellId_from, CellId_to);
+        targetEdge = getEdge(CellId_from, CellId_to);
     }
 
 
@@ -295,8 +293,7 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
     bool addedGoalEdge;
     int currRegion = -1;
     int prevRegion = -1;
-    std::vector<Edge*> edgesNeedUpdate;
-    Edge *realTargetEdge = NULL;
+    std::unordered_set<Edge*> successEdgesNeedUpdate;
 };
 
 }

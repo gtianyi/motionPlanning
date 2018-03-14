@@ -391,8 +391,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
     virtual bool sample(ompl::base::State *) = 0;
     virtual bool sampleNear(ompl::base::State*, const ompl::base::State *, const double) = 0;
     virtual void reached(ompl::base::State *) = 0;
-
-                            
+                                
   protected:
 
     virtual void vertexMayBeInconsistent(unsigned int) = 0;
@@ -406,6 +405,18 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
                 vertexHasInfiniteValue(n);
             }
             updateEdgeEffort(e, e->getEstimatedRequiredSamples() + vertices[n].g);
+        }
+    }
+
+    virtual void addOutgoingEdgesToOpenTS(unsigned int source) {
+        auto neighbors = abstraction->getNeighboringCells(source);
+        for(auto n : neighbors) {
+            Edge *e = getEdge(source, n);
+            if(!open.inHeap(e)) {
+                open.push(e);
+            } else {
+                open.siftFromItem(e);
+            }
         }
     }
 

@@ -91,8 +91,7 @@ def generate_configurations():
            'ValidEdgeDistributionAlpha ? 10\n' \
            'ValidEdgeDistributionBeta ? 1\n' \
            'InvalidEdgeDistributionAlpha ? 1\n' \
-           'InvalidEdgeDistributionBeta ? 10\n' \
-           'Output ? /dev/null\n'
+           'InvalidEdgeDistributionBeta ? 10\n' 
 
     algorithms = planners()
     domains = seeded_domains()

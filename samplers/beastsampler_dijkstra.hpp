@@ -223,7 +223,6 @@ public:
 		}
 	}
 
-
 protected:
 	void vertexMayBeInconsistent(unsigned int id) {
 		dijkstra(goalID);

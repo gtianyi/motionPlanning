@@ -166,7 +166,7 @@ class BeastPlannerUpdateRightEdge : public ompl::control::RRT {
                         Motion *motion = new Motion();
                         motion->state = pstates[p];
 
-                        newsampler_->reachedFromTree(nmotion->state, pstates[p]);
+                        newsampler_->reached(pstates[p]);
 
 #ifdef STREAM_GRAPHICS
                         streamPoint(pstates[p], 1, 0, 0, 1);
@@ -210,7 +210,7 @@ class BeastPlannerUpdateRightEdge : public ompl::control::RRT {
                     motion->steps = cd;
                     motion->parent = nmotion;
 
-                    newsampler_->reachedFromTree(nmotion->state, motion->state);
+                    newsampler_->reached(motion->state);
 
 #ifdef STREAM_GRAPHICS
                     streamPoint(nmotion->state, 1, 0, 0, 1);

@@ -90,6 +90,7 @@ public:
     void reached(ompl::base::State *state) {
         return;
     }
+
     bool reachedTest(int end, ompl::base::State *state) {
 		ompl::base::ScopedState<> incomingState(si_->getStateSpace());
 		incomingState = state;

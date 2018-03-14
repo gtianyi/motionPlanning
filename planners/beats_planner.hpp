@@ -15,13 +15,13 @@ namespace ompl {
 namespace control {
 
 class BeatsPlanner: public ompl::control::RRT {
-public:
+  public:
 
     /** \brief Constructor */
     BeatsPlanner(const SpaceInformationPtr& si, const FileMap& params) :
-        ompl::control::RRT(si),
-        newsampler_(NULL),
-        params(params) {
+            ompl::control::RRT(si),
+            newsampler_(NULL),
+            params(params) {
 
         whichSearch = params.stringVal("WhichSearch");
 
@@ -142,12 +142,11 @@ public:
         base::State* rstate = rmotion->state;
         Control* rctrl = rmotion->control;
         base::State* xstate = si_->allocState();
-
+        
         Motion* resusableMotion = new Motion(siC_);
 
         while (terminationCondition == false) {
             Motion* nmotion = NULL;
-
             newsampler_->sample(resusableMotion->state, rstate);
 
             /* find closest state in the tree */
@@ -162,56 +161,51 @@ public:
 
             if (addIntermediateStates_) {
                 // this code is contributed by Jennifer Barry
-                std::vector<base::State*> intermediateStates; // Intermediate states
-                cd = siC_->propagateWhileValid(nmotion->state, rctrl, cd, intermediateStates, true);
+                std::vector<base::State*> pstates; // Intermediate states
+                cd = siC_->propagateWhileValid(nmotion->state, rctrl, cd, pstates, true);
+                if(cd >=  siC_->getMinControlDuration()) {
+                    Motion *lastmotion =  nmotion;
+                    bool solved =  false;
+                    size_t p =  0;
+                    for(; p <  pstates.size(); ++p) {
+                        /*  create a motion */
+                        Motion *motion =  new Motion();
+                        motion->state =  pstates[p];
 
-                if (cd >= siC_->getMinControlDuration()) {
-                    Motion* lastmotion = nmotion;
-                    bool solved = false;
-
-                    for (const auto currentState : intermediateStates) {
-                        /* create a motion */
-                        Motion* motion = new Motion();
-                        motion->state = currentState;
-
-                        newsampler_->reached(currentState);
+                        newsampler_->reached(pstates[p]);
 
 #ifdef STREAM_GRAPHICS
-                        streamPoint(pstates[p], 1, 0, 0, 1);
+                        streamPoint(pstates[p],  1,  0,  0,  1);
 #endif
 
-                        //we need multiple copies of rctrl
-                        motion->control = siC_->allocControl();
-                        siC_->copyControl(motion->control, rctrl);
-                        motion->steps = 1;
-                        motion->parent = lastmotion;
-                        lastmotion = motion;
+                        // we need multiple copies of rctrl
+                        motion->control =  siC_->allocControl();
+                        siC_->copyControl(motion->control,  rctrl);
+                        motion->steps =  1;
+                        motion->parent =  lastmotion;
+                        lastmotion =  motion;
                         nn_->add(motion);
-                        double dist = 0.0;
-                        solved = goal->isSatisfied(motion->state, &dist);
-                        if (solved) {
-                            approxdif = dist;
-                            solution = motion;
+                        double dist =  0.0;
+                        solved =  goal->isSatisfied(motion->state,& dist);
+                        if(solved) {
+                            approxdif =  dist;
+                            solution =  motion;
                             break;
                         }
-                        if (dist < approxdif) {
-                            approxdif = dist;
-                            approxsol = motion;
+                        if(dist <  approxdif) {
+                            approxdif =  dist;
+                            approxsol =  motion;
                         }
                     }
 
-                    // TODO
-                    //free any states after we hit the goal
-                    for (const auto currentState : intermediateStates) {
-                        si_->freeState(currentState);
-                    }
-
-//                    while(++p < pstates.size())
-                    if (solved)
+                    // free any states after we hit the goal
+                    while( ++p <  pstates.size())
+                        si_->freeState(pstates[p]);
+                    if(solved)
                         break;
                 } else
-                    for (size_t p = 0; p < intermediateStates.size(); ++p)
-                        si_->freeState(intermediateStates[p]);
+                    for(size_t p =  0 ; p <  pstates.size(); ++p)
+                        si_->freeState(pstates[p]);
             } else {
                 if (cd >= siC_->getMinControlDuration()) {
                     /* create a motion */
@@ -291,7 +285,7 @@ public:
         // newsampler_ = NULL;
     }
 
-protected:
+  protected:
 
     ompl::base::BeastSamplerBase* newsampler_;
     const FileMap& params;
