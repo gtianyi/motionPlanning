@@ -408,6 +408,18 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         }
     }
 
+    virtual void addOutgoingEdgesToOpenTS(unsigned int source) {
+        auto neighbors = abstraction->getNeighboringCells(source);
+        for(auto n : neighbors) {
+            Edge *e = getEdge(source, n);
+            if(!open.inHeap(e)) {
+                open.push(e);
+            } else {
+                open.siftFromItem(e);
+            }
+        }
+    }
+
     Edge* getEdge(unsigned int a, unsigned int b) {
         Edge *e = edges[a][b];
         if(e == NULL) {
