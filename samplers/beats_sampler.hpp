@@ -102,13 +102,15 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
         Parent* currentParent;
     };
   public:
-    BeatsSampler(ompl::base::SpaceInformation* base, ompl::base::State* start, const ompl::base::GoalPtr& goal,
-                 base::GoalSampleableRegion* gsr, const FileMap& params) : BeastSamplerBase(base,
-                                                                                            start,
-                                                                                            goal,
-                                                                                            gsr,
-                                                                                            params),
-                                                                           addedGoalEdge(false) {}
+    BeatsSampler(ompl::base::SpaceInformation* base,
+                 ompl::base::State* start,
+                 const ompl::base::GoalPtr& goal,
+                 base::GoalSampleableRegion* gsr,
+                 const FileMap& params) :
+            BeastSamplerBase(base, start, goal, gsr, params), addedGoalEdge(false) {
+        doImportantSampling = params.boolVal("ImportantSampling");
+        importantSampleWeight = params.doubleVal("ImportantSampleWeight");
+    }
 
     ~BeatsSampler() {}
 
@@ -285,7 +287,10 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
                     abstraction->getNeighboringCells(current->getId());
             for (auto & kid: kids){
                 Edge *e = getEdge(kid, current->getId());
-                double effort = current->getVal() + sampleEffort(e);
+                double effort = current->getVal();
+                effort += doImportantSampling &&
+                        randomNumbers.uniform01() < importantSampleWeight?
+                                                   sampleEffort(e) : e->effort;
                 if(closed[kid] == 0){
                     wrappers[kid]->setVal(effort);
                     openList.push(wrappers[kid]);
@@ -308,6 +313,9 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
 
     bool addedGoalEdge;
     std::mt19937 randomNumberGenerator{1};
+    bool doImportantSampling;
+    double importantSampleWeight;
+    ompl::RNG randomNumbers;
 };
 
 }

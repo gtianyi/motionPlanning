@@ -8,7 +8,7 @@ Seed ? 2
 
 Runs ? 1
 
-Domain ? Quadrotor
+Domain ? KinematicCar
  
 PropagationStepSize ? 0.05
 
@@ -62,4 +62,6 @@ CostPruningStyle ? G
 
 Sampler ? BEATS
 
-Output ? outfile-beats-small
+ImportantSampling ? TRUE
+
+ImportantSampleWeight ? 0.5
