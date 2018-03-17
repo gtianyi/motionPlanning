@@ -5,6 +5,7 @@
 #include <ompl/base/GenericParam.h>
 
 #include "abstractions/abstraction.hpp"
+#include "abstractions/prm_lite_halton.hpp"
 #include "abstractions/prmlite.hpp"
 #include "abstractions/grid.hpp"
 
@@ -26,13 +27,14 @@ public:
 			abstraction = new PRMLite(base, abstractStart, abstractGoal, params);
 		} else if(abstractionType.compare("GRID") == 0) {
 			abstraction = new ::Grid(abstractStart, abstractGoal, params);
-		}
-		else {
+		} else if(abstractionType.compare("PRM_HALTON") == 0) {
+			abstraction = new PRMLiteHalton(base, abstractStart, abstractGoal, params);
+		} else {
 			throw ompl::Exception("AbstractionBasedSampler", "unrecognized abstraction type");
 		}
 	}
 
-	virtual ~AbstractionBasedSampler() {
+	virtual ~AbstractionBasedSampler() override {
 		delete abstraction;
 	}
 

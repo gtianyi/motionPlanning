@@ -29,6 +29,8 @@ public:
 
 		nn->setDistanceFunction(boost::bind(&Abstraction::abstractDistanceFunction, this, _1, _2));
 	}
+	
+	virtual ~PRMLite() = default;
 
 	virtual void initialize(bool forceConnectedness = true) {
 		generateVertices();
@@ -85,7 +87,7 @@ public:
 	}
 
 protected:
-	void generateVertices() {
+	virtual void generateVertices() {
 		Timer timer("Vertex Generation");
 		ompl::base::StateSpacePtr abstractSpace = globalParameters.globalAbstractAppBaseGeometric->getStateSpace();
 		ompl::base::ValidStateSamplerPtr abstractSampler = globalParameters.globalAbstractAppBaseGeometric->getSpaceInformation()->allocValidStateSampler();
@@ -109,7 +111,7 @@ protected:
 			nn->add(vertices[i]);
 		}
 	}
-
+	
 	void generateEdges() {
 		Timer timer("Edge Generation");
 		edges.clear();

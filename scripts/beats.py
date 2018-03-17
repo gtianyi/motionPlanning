@@ -24,6 +24,7 @@ class Experiment:
         self.command = command
         self.raw_result = None
         self.result = None
+        self.error = None
 
 
 def process_log(log_lines):
@@ -105,6 +106,7 @@ class Worker(Thread):
                 stdin, stdout, stderr = client.exec_command(experiment.command)
                 result = {'stdout': stdout.readlines(), 'stderr': stderr.readlines()}
                 experiment.raw_result = result
+                experiment.error = result['stderr']
                 experiment.result = process_log("".join(result['stdout']).splitlines())
                 self.processed_experiment_queue.put(experiment)
                 self.progress_bar.update()
@@ -176,10 +178,10 @@ def main():
     completed_experiments = [result_queue.get() for i in range(result_queue.qsize())]
 
     with open("data-latest.json", 'w') as outfile:
-        json.dump([{**exp.result, **exp.configuration} for exp in completed_experiments], outfile)
+        json.dump([{**exp.result, **exp.configuration, 'error': exp.error} for exp in completed_experiments], outfile)
 
     with open("data-{:%H-%M-%d-%m-%y}.json".format(datetime.datetime.now()), 'w') as outfile:
-        json.dump([{**exp.result, **exp.configuration} for exp in completed_experiments], outfile)
+        json.dump([{**exp.result, **exp.configuration, 'error': exp.error} for exp in completed_experiments], outfile)
 
 
 if __name__ == '__main__':
