@@ -65,12 +65,28 @@ def seeded_domains():
 
 
 def planners():
-    base = "Planner ? {planner}\n" \
-           "WhichSearch ? D*\n"
+    # base = "Planner ? {planner}\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? D*\n"
+    #
+    # algorithms = ['BEAST', 'BEAST']
+    beast = "Planner ? BEAST\n" \
+            "AbstractionType ? PRM\n" \
+            "WhichSearch ? D*\n" \
+            "Algorithm ? BEAST"
 
-    algorithms = ['BEASTnew', 'BEAST']
+    halton = "Planner ? BEAST\n" \
+             "AbstractionType ? PRM_HALTON\n" \
+             "WhichSearch ? D*\n" \
+             "Algorithm ? Halton"
 
-    return [base.format(planner=planner) for planner in algorithms]
+    newbonus = "Planner ? BEAST\n" \
+               "AbstractionType ? PRM\n" \
+               "WhichSearch ? D*BONUS\n" \
+               "Algorithm ? NewBonus"
+
+    # return [base.format(planner=planner) for planner in algorithms] + [halton]
+    return [halton, newbonus, beast]
 
 
 def generate_configurations():
@@ -84,14 +100,13 @@ def generate_configurations():
            'MaxControlDuration ? 100\n' \
            'GoalRadius ? 0.1\n' \
            '{planner}\n' \
-           'AbstractionType ? PRM\n' \
            'NumEdges ? 5\n' \
            'PRMSize ? 1000\n' \
            'StateRadius ? 6\n' \
            'ValidEdgeDistributionAlpha ? 10\n' \
            'ValidEdgeDistributionBeta ? 1\n' \
            'InvalidEdgeDistributionAlpha ? 1\n' \
-           'InvalidEdgeDistributionBeta ? 10\n' 
+           'InvalidEdgeDistributionBeta ? 10\n'
 
     algorithms = planners()
     domains = seeded_domains()
