@@ -272,21 +272,27 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
     void computeShortestPathWithThompsonSampling() {
         std::vector<VertexWrapper *>wrappers;
         wrappers.reserve(vertices.size());
+        
         for (auto &v : vertices){
             wrappers.emplace_back(new VertexWrapper(&v));
         }
+        
         InPlaceBinaryHeap<VertexWrapper, VertexWrapper> openList;
-        int closed[vertices.size()] = {0};
+        std::vector<bool> closed(vertices.size(), false);
+        
         wrappers[goalID]->setVal(0);
         openList.push(wrappers[goalID]);
         int count = 0;
+        
         while( !openList.isEmpty()){
             VertexWrapper * current = openList.pop();
-            closed[current->getId()] = 1;
+            closed[current->getId()] = true;
             std::vector<unsigned int> kids =
                     abstraction->getNeighboringCells(current->getId());
+            
             for (auto & kid: kids){
                 Edge *e = getEdge(kid, current->getId());
+                
                 double effort = current->getVal();
                 effort += doImportantSampling &&
                         randomNumbers.uniform01() < importantSampleWeight?
@@ -298,6 +304,7 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
                 }
             }
         }
+        
         for (auto v : wrappers){
             delete v;
         }
