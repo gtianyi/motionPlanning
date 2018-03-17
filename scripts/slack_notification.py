@@ -15,7 +15,7 @@ def start_experiment_notification(experiment_count=None):
     if experiment_count is None:
         message = user + ' just started running experiments.'
     else:
-        message = '{user} just started running {experiment_count} experiments.'.format(user, experiment_count)
+        message = '{user} just started running {experiment_count} experiments.'.format(user=user, experiment_count=experiment_count)
 
     send_notification(message)
 
@@ -45,5 +45,5 @@ def send_notification(text, user='experiment_bot', channel='#experiments'):
 # Test
 
 if __name__ == '__main__':
-    start_experiment_notification()
+    start_experiment_notification(1)
     end_experiment_notification()
