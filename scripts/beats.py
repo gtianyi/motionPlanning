@@ -12,6 +12,7 @@ import configuration_generator
 import configuration_parser
 import datetime
 import json
+import slack_notification
 
 __author__ = 'Bence Cserna (bence@cserna.net)'
 
@@ -164,6 +165,8 @@ def main():
     progress_bar = tqdm(total=command_queue.qsize())
     workers = create_workers_for_hosts(HOSTS, command_queue, result_queue, progress_bar)
 
+    slack_notification.start_experiment_notification(len(experiments))
+
     # Start workers
     for worker in workers:
         worker.start()
@@ -182,6 +185,8 @@ def main():
 
     with open("data-{:%H-%M-%d-%m-%y}.json".format(datetime.datetime.now()), 'w') as outfile:
         json.dump([{**exp.result, **exp.configuration, 'error': exp.error} for exp in completed_experiments], outfile)
+
+    slack_notification.end_experiment_notification()
 
 
 if __name__ == '__main__':
