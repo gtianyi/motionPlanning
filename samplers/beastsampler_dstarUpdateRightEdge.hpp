@@ -70,7 +70,7 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
            for (const auto &e : successEdgesNeedUpdate){
                 if(!addedGoalEdge && e->endID == goalID) {
                     Edge *goalEdge = new Edge(goalID, goalID);
-                    goalEdge->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
+                    // goalEdge->updateEdgeStatusKnowledge(Abstraction::Edge::VALID);
                     goalEdge->effort = 1;
                     open.push(goalEdge);
                     addedGoalEdge = true;
@@ -103,27 +103,27 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
                 addOutgoingEdgesToOpen(e->endID);
            }
         }
+        targetEdge = open.peek();
+        // bool getNextEdge = true;
+        // while(getNextEdge) {
+        //     assert(!open.isEmpty());
 
-        bool getNextEdge = true;
-        while(getNextEdge) {
-            assert(!open.isEmpty());
+        //     targetEdge = open.peek();
 
-            targetEdge = open.peek();
-
-            if(targetEdge->status == Abstraction::Edge::UNKNOWN) {
-                Abstraction::Edge::CollisionCheckingStatus status = abstraction->isValidEdge(targetEdge->startID, targetEdge->endID) ? Abstraction::Edge::VALID :
-                        Abstraction::Edge::INVALID;
-                targetEdge->updateEdgeStatusKnowledge(status);
+        //     if(targetEdge->status == Abstraction::Edge::UNKNOWN) {
+        //         Abstraction::Edge::CollisionCheckingStatus status = abstraction->isValidEdge(targetEdge->startID, targetEdge->endID) ? Abstraction::Edge::VALID :
+        //                 Abstraction::Edge::INVALID;
+        //         targetEdge->updateEdgeStatusKnowledge(status);
 				
-                //yes this looks weird but we need it for right now to do some debugging
-                updateEdgeEffort(targetEdge, targetEdge->effort);
+        //         //yes this looks weird but we need it for right now to do some debugging
+        //         updateEdgeEffort(targetEdge, targetEdge->effort);
 
-                updateVertex(targetEdge->startID);
-                computeShortestPath();
-            } else {
-                getNextEdge = false;
-            }
-        }
+        //         updateVertex(targetEdge->startID);
+        //         computeShortestPath();
+        //     } else {
+        //         getNextEdge = false;
+        //     }
+        // }
 
         targetSuccess = false;
 
@@ -137,15 +137,13 @@ class BeastSampler_dstarUpdateRightEdge : public ompl::base::BeastSamplerBase {
         } else {
             
             ompl::base::ScopedState<> vertexState(globalParameters.globalAppBaseControl->getGeometricComponentStateSpace());
-            // guty: need to use globalAppBaseGeometric for linkage
-            if(abstraction->supportsSampling()) {
-                vertexState = abstraction->sampleAbstractState(targetEdge->endID);
-            } else {
-                vertexState = abstraction->getState(targetEdge->endID);
-                ompl::base::ScopedState<> fullState = globalParameters.globalAppBaseControl->getFullStateFromGeometricComponent(vertexState);
-                fullStateSampler->sampleUniformNear(to, fullState.get(), stateRadius);
-                // guty: add a sampler for linkage here
-            }
+           
+            vertexState = abstraction->getState(targetEdge->endID);
+            ompl::base::ScopedState<> fullState =
+                    globalParameters.globalAppBaseControl->
+                    getFullStateFromGeometricComponent(vertexState);
+            fullStateSampler->sampleUniformNear(to, fullState.get(), stateRadius);
+           
             si_->copyState(from,
                            vertices[targetEdge->startID].sampleStateByDis(si_, to));
         }
