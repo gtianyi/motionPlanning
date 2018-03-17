@@ -296,8 +296,10 @@ class BeatsSampler: public ompl::base::BeastSamplerBase {
                 double effort = current->getVal();
                 effort += doImportantSampling &&
                         randomNumbers.uniform01() < importantSampleWeight?
-                                                   sampleEffort(e) : e->effort;
-                if(closed[kid] == 0){
+                                                    sampleEffort(e) :
+                        e->getEstimatedRequiredSamples();
+                
+                if( !closed[kid]){
                     wrappers[kid]->setVal(effort);
                     openList.push(wrappers[kid]);
                     e->effort = effort;
