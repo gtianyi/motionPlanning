@@ -44,8 +44,8 @@ protected:
 		int64_t getRandomRegionAlongPathToGoal(ompl::RNG &randomNumbers) const {
 			unsigned int randomIndex = (unsigned int)(randomNumbers.uniform01() * regionPath.size());
 			if(regionPath.size() == 0) {
-				//fprintf(stderr, "about to fail\n");
-				return -1;
+                            // fprintf(stderr, "about to fail\n");
+				return 0;
 			}
 			return regionPath[randomIndex];
 		}
