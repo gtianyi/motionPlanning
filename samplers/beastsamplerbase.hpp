@@ -171,6 +171,13 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
             return estimate;
         }
 
+         double getBonusEffort(unsigned int numberOfStates) const {
+            double probability = (alpha  / (alpha + beta)) *
+                    ((numberOfStates - 1) / numberOfStates) + (1. / numberOfStates);
+            double estimate = 1. / probability;
+            return estimate;
+        }
+
         void rewardHypotheticalSamplesAfterPositivePropagation(unsigned int numberOfStates) {
             double additive = (1. / ((double)numberOfStates - 1));
             alpha += additive;
@@ -467,6 +474,24 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         return bestValue;
     }
 
+    double getInteriorEdgeEffortNew(Edge *edge) {
+        double numberOfStates = vertices[edge->endID].states.size();
+
+        double bestValue = std::numeric_limits<double>::infinity();
+        auto neighbors = abstraction->getNeighboringCells(edge->endID);
+        for(auto n : neighbors) {
+            if(n == edge->startID) continue;
+            Edge *e = getEdge(edge->endID, n);
+            double value = e->getBonusEffort(numberOfStates) + vertices[n].g;
+
+            if(value < bestValue) {
+                bestValue = value;
+                edge->interiorToNextEdgeID = n;
+            }
+        }
+
+        return bestValue;
+    }
     void updateSuccesfulInteriorEdgePropagation(Edge *edge) {
         double numberOfStates = vertices[edge->endID].states.size();
         Edge *e = getEdge(edge->endID, edge->interiorToNextEdgeID);

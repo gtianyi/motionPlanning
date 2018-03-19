@@ -40,6 +40,7 @@ GlobalParameters globalParameters;
 #include "planners/beastplannerUpdateRightEdge.hpp"
 #include "planners/beastplannergeometric.hpp"
 #include "planners/beats_planner.hpp"
+#include "planners/gust.hpp"
 
 #include "planners/sststar.hpp"
 #include "planners/restartingrrtwithpruning.hpp"
@@ -85,7 +86,9 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::UCTPlanner(spaceInformation, params));
   } else if(planner.compare("BEATS") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeatsPlanner(spaceInformation, params));
-  }
+  } else if(planner.compare("GUST") ==  0) {
+    plannerPointer =  ompl::base::PlannerPtr(new ompl::control::gust(benchmarkData.simplesetup->getSpaceInformation(),  params));
+}
 
   /* anytime planners */
   else if(planner.compare("SST") == 0) {
