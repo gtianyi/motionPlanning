@@ -9,6 +9,8 @@
 
 #include "../samplers/beastsampler_dstar.hpp"
 #include "../samplers/beastsampler_dijkstra.hpp"
+#include "../samplers/beastsampler_dstarNewBonus.hpp"
+#include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
 #include <limits>
 
 namespace ompl {
@@ -97,6 +99,12 @@ class BeastPlanner : public ompl::control::RRT {
             } else if(whichSearch.compare("Dijkstra") == 0) {
                 newsampler_ = new ompl::base::BeastSampler_dijkstra((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
                                                                     goal_s, params);
+            } else if(whichSearch.compare("D*BONUS") == 0) {
+                newsampler_ = new ompl::base::BeastSampler_dstarNewBonus((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
+                                                                    goal_s, params);            
+            } else if(whichSearch.compare("D*NOGEOMETRIC") == 0) {
+                newsampler_ = new ompl::base::BeastSampler_dstarNoGeometricTest((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
+                                                                    goal_s, params);            
             } else {
                 throw ompl::Exception("Unrecognized best first search type", whichSearch.c_str());
             }
