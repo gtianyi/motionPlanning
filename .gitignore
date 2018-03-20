@@ -40,15 +40,17 @@
 #plots
 *.pdf
 *.eps
+*.svg
 
 #data
 *.json
+*.csv
 
 #instance input
 *.inst
 
 #.gitignore
-.gitignore
+*gitignore*
 
 #make file
-CMakeList.txt
+*CMakeLists*
