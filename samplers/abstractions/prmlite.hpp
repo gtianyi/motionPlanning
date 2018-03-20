@@ -110,8 +110,8 @@ public:
 		    const unsigned int endVertexId = idEdgePair.first;
 		    const Edge& edge = idEdgePair.second;
 		    
-            const double oldCenterDistance = distanceFunction(oldRegionCenter, newRegionCenter);
-		    const double newCenterDistance = distanceFunction(newRegionCenter, newRegionCenter);
+            const double oldCenterDistance = distanceFunction(oldRegionCenter, vertices[edge.endpoint]);
+		    const double newCenterDistance = distanceFunction(newRegionCenter, vertices[edge.endpoint]);
 
 		    if (newCenterDistance < oldCenterDistance) {
 			    // Remove old-target edge in both directions
@@ -124,7 +124,14 @@ public:
 		    }
         }
         
-	    // TODO take care of the edge cases: if any of the two centers are low rank we should add some neighbors
+        // Make sure that they have at least a few edges. 
+	    if (edges[newRegionCenter->id].size() < numEdges) {
+		    addKNeighbors(newRegionCenter, numEdges);
+	    }
+        
+	    if (edges[oldRegionCenter->id].size() < numEdges) {
+		    addKNeighbors(oldRegionCenter, numEdges);
+	    }
 
         return newRegionCenter;
     }
