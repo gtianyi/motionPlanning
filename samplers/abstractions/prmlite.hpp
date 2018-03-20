@@ -133,6 +133,12 @@ public:
 		    addKNeighbors(oldRegionCenter, numEdges);
 	    }
 
+	    // Reset neighbor lists
+        oldRegionCenter->neighbors.clear();
+	    oldRegionCenter->populatedNeighors = false;
+	    newRegionCenter->neighbors.clear();
+	    newRegionCenter->populatedNeighors = false;       
+        
         return newRegionCenter;
     }
     

@@ -434,25 +434,20 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
                             beforeSplitNeighbors.begin(), beforeSplitNeighbors.end(),
                             std::inserter(newNeighbors, newNeighbors.begin()));
 
-        for (const auto &neighborId : removedNeighbors){
-            edges[splitRegionId].erase(neighborID);
+        for (const auto neighborId : removedNeighbors){
+            edges[splitRegionId].erase(neighborId);
             edges[neighborId].erase(splitRegionId);
             reverseEdges[splitRegionId].erase(neighborId);
             reverseEdges[neighborId].erase(splitRegionId);
         }
         
-        for (const auto &neighborId : newNeighbors){
+        for (const auto neighborId : newNeighbors){
             getEdge(splitRegionId, neighborId);
             getEdge(neighborId, splitRegionId);
         }
         
         // Add new edges
         addNeighbors(newNeighbors, splitRegionId);
-        
-        // Vertices
-        // Edges
-        // Open list
-        // dstar_U 
     }
     
     void addNeighbors(const std::vector<unsigned int> neighbors, unsigned int region) {
