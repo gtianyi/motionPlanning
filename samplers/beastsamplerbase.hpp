@@ -2,6 +2,7 @@
 
 #include "../structs/inplacebinaryheap.hpp"
 #include "abstractionbasedsampler.hpp"
+#include <algorithm>
 
 namespace ompl {
 
@@ -120,7 +121,6 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         }
 
         std::vector<StateWrapper> states;
-	
 
         unsigned int id;
         Key key;
@@ -246,7 +246,9 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         Edge::invalidEdgeDistributionBeta = params.doubleVal("InvalidEdgeDistributionBeta");
     }
 
-    virtual ~BeastSamplerBase() {}
+    virtual ~BeastSamplerBase() {
+        // TODO destruct all the edges
+    }
 
     virtual void initialize() {
         abstraction->initialize();
@@ -401,24 +403,91 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
                                 
   protected:
 
+    virtual void splitRegions(const unsigned int splitRegionId) {
+        // Get edges before splitting 
+        const auto outEdges = edges[splitRegionId];
+        const auto inEdges = reverseEdges[splitRegionId];
+        const auto beforeSplitNeighbors = abstraction->getNeighboringCells(splitRegionId);
+        
+        // Insert a new region and reassign edges
+        const auto newAbstractRegion = static_cast<PRMLite*>(abstraction)->splitRegion(targetEdge->endID);
+        const auto newRegionId = newAbstractRegion->id;
+        
+        // Allocate new sampler region 
+        vertices.emplace_back(newRegionId); 
+        
+        // Fix edges after split
+        
+        // Add edges of new region
+        auto neighbors = abstraction->getNeighboringCells(newRegionId);
+        addNeighbors(neighbors, newRegionId);
+        
+        // Update edges for old region 
+        // keep previously existing edges
+        const auto afterSplitNeighbors = abstraction->getNeighboringCells(splitRegionId);
+        
+        // Sort neighbor sets
+        std::sort(beforeSplitNeighbors.begin(), beforeSplitNeighbors.end());
+        std::sort(afterSplitNeighbors.begin(), afterSplitNeighbors.end());
+        
+        std::vector<unsigned int> removedNeighbors;
+        std::vector<unsigned int> newNeighbors;
+        
+        std::set_difference(beforeSplitNeighbors.begin(), beforeSplitNeighbors.end(),
+                            afterSplitNeighbors.begin(), afterSplitNeighbors.end(),
+                            std::inserter(removedNeighbors, removedNeighbors.begin()));
+
+        std::set_difference(afterSplitNeighbors.begin(), afterSplitNeighbors.end(),
+                            beforeSplitNeighbors.begin(), beforeSplitNeighbors.end(),
+                            std::inserter(newNeighbors, newNeighbors.begin()));
+
+        for (const auto neighborId : removedNeighbors){
+            edges[splitRegionId].erase(neighborId);
+            edges[neighborId].erase(splitRegionId);
+            reverseEdges[splitRegionId].erase(neighborId);
+            reverseEdges[neighborId].erase(splitRegionId);
+        }
+        
+        for (const auto neighborId : newNeighbors){
+            getEdge(splitRegionId, neighborId);
+            getEdge(neighborId, splitRegionId);
+        }
+        
+        // Add new edges
+        addNeighbors(newNeighbors, splitRegionId);
+    }
+    
+    void addNeighbors(const std::vector<unsigned int> neighbors, unsigned int region) {
+        for(auto neighbor : neighbors) {
+            // We might want to reuse some of the old Alpha Beta values
+            getEdge(region, neighbor);
+        }
+    }
+    
+     
+
     virtual void vertexMayBeInconsistent(unsigned int) = 0;
     virtual void vertexHasInfiniteValue(unsigned int) = 0;
 
     virtual void addOutgoingEdgesToOpen(unsigned int source) {
         auto neighbors = abstraction->getNeighboringCells(source);
         for(auto n : neighbors) {
-            Edge *e = getEdge(source, n);
+            Edge* e = getEdge(source, n);
+            
             if(std::isinf(vertices[n].g)) {
                 vertexHasInfiniteValue(n);
             }
+            
             updateEdgeEffort(e, e->getEstimatedRequiredSamples() + vertices[n].g);
         }
     }
 
     virtual void addOutgoingEdgesToOpenTS(unsigned int source) {
         auto neighbors = abstraction->getNeighboringCells(source);
+        
         for(auto n : neighbors) {
-            Edge *e = getEdge(source, n);
+            Edge* e = getEdge(source, n);
+            
             if(!open.inHeap(e)) {
                 open.push(e);
             } else {
@@ -428,19 +497,23 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
     }
 
     Edge* getEdge(unsigned int a, unsigned int b) {
-        Edge *e = edges[a][b];
-        if(e == NULL) {
+        Edge*& e = edges[a][b];
+        
+        if(e == nullptr) {
             e = new Edge(a, b);
+            
             if(abstraction->getCollisionCheckStatusUnchecked(a, b) == Abstraction::Edge::INVALID) {
                 e->updateEdgeStatusKnowledge(Abstraction::Edge::INVALID);
             }
-            edges[a][b] = e;
+            
+            // edges[a][b] = e;
             reverseEdges[b][a] = e;
         }
+        
         return e;
     }
 
-    virtual void updateEdgeEffort(Edge *e, double effort, bool addToOpen = true) {
+    virtual void updateEdgeEffort(Edge* e, double effort, bool addToOpen = true) {
         assert(effort >= 0);
 		
         e->effort = effort;
@@ -460,7 +533,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         for(auto n : neighbors) {
             if(n == edge->startID) continue;
 
-            Edge *e = getEdge(edge->endID, n);
+            Edge* e = getEdge(edge->endID, n);
 
             double value = mySamples + e->getHypotheticalRequiredSamplesAfterPositivePropagation(numberOfStates) +
                     vertices[n].g;
@@ -508,9 +581,9 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
     InPlaceBinaryHeap<Edge, Edge> open;
 
     bool targetSuccess = false;
-    Edge *targetEdge = NULL;
-    ompl::base::State *startState = NULL;
-    ompl::base::State *goalState = NULL;
+    Edge *targetEdge = nullptr;
+    ompl::base::State *startState = nullptr;
+    ompl::base::State *goalState = nullptr;
 
     ompl::RNG randomNumbers;
     base::GoalSampleableRegion *goalSampler;

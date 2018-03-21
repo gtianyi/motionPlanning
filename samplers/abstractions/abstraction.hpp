@@ -125,22 +125,28 @@ public:
 	}
 
 	const std::vector<unsigned int>& getNeighboringCells(unsigned int index) {
-		if(vertices[index]->populatedNeighors) {
-			return vertices[index]->neighbors;
+		Vertex*& vertex = vertices[index];
+		if(vertex->populatedNeighors) {
+			return vertex->neighbors;
 		}
-		vertices[index]->populatedNeighors = true;
+		
+		// Populate neighbors
+		vertex->populatedNeighors = true;
 
 		auto vertexAndEdges = edges.find(index);
 		assert(vertexAndEdges != edges.end());
 
 		const auto &edges = vertexAndEdges->second;
 
-		vertices[index]->neighbors.reserve(edges.size());
+		// Remove the old neighbors. This might not what we want.
+        vertex->neighbors.clear();
+		
+		vertex->neighbors.reserve(edges.size());
 		for(const auto &edge : edges) {
-			vertices[index]->neighbors.emplace_back(edge.second.endpoint);
+			vertex->neighbors.emplace_back(edge.second.endpoint);
 		}
 
-		return vertices[index]->neighbors;
+		return vertex->neighbors;
 	}
 
 	virtual double abstractDistanceFunction(const Vertex *a, const Vertex *b) const {
