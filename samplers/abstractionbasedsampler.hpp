@@ -6,6 +6,7 @@
 
 #include "abstractions/abstraction.hpp"
 #include "abstractions/prm_lite_halton.hpp"
+#include "abstractions/prm_gust.hpp"
 #include "abstractions/prmlite.hpp"
 #include "abstractions/grid.hpp"
 
@@ -29,6 +30,8 @@ public:
 			abstraction = new ::Grid(abstractStart, abstractGoal, params);
 		} else if(abstractionType.compare("PRM_HALTON") == 0) {
 			abstraction = new PRMLiteHalton(base, abstractStart, abstractGoal, params);
+		} else if(abstractionType.compare("PRM_GUST") == 0) {
+			abstraction = new PRMGust(base, abstractStart, abstractGoal, params);
 		} else {
 			throw ompl::Exception("AbstractionBasedSampler", "unrecognized abstraction type");
 		}

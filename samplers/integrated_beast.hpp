@@ -64,6 +64,15 @@ public:
     IntegratedBeast(const IntegratedBeast&) = delete;
     IntegratedBeast(IntegratedBeast&&) = delete;
 
+    void initialize(){
+        // TODO: get region counts from parameter file
+        int regionCount = 100;
+        initializeRegions(regionCount);
+
+        // dijkstra or D *
+        // push outgoing edges of start region into open
+    }
+    
     void initializeRegions(const size_t regionCount) {
         if (regionCount <= 2) {
             throw ompl::Exception("IntegratedBeast::initializeRegions", "Region count must be at least 3");
@@ -74,6 +83,27 @@ public:
     }
 
     void splitRegion() {}
+
+    bool sample(ompl::base::State* from, ompl::base::State* to){
+        computerShortestPath();
+        auto targetEdge = open.top();
+
+        if(targetEdge->sourceId ==  targetEdge->targetId &&  targetEdge->sourceId ==  goalID) {
+            spaceInformation->copyState(from, regions[targetEdge->sourceId].sampleState());
+            goalSampler->sampleGoal(to);
+        } else {
+            spaceInformation->copyState(from,  vertices[targetEdge->sourceId].sampleState());
+           
+            auto regionCenter = regions[targetEdge->targetId].state;
+            fullStateSampler->sampleUniformNear(to, regionCenter, stateRadius);
+        }
+        
+        return false;
+    }
+
+    void reached(ompl::base::State *state) {
+        return;
+    }
 
 private:
     virtual void generateRegions(const size_t regionCount) {
