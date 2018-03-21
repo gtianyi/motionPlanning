@@ -45,10 +45,13 @@ public:
                   return globalParameters.globalAbstractAppBaseGeometric->getStateSpace()->distance(
                           regions[lhs].state, regions[rhs].state);
               }},
+              spaceInformation{spaceInformation},
+              sampler{spaceInformation->allocStateSampler()},
               abstractSpace{globalParameters.globalAbstractAppBaseGeometric->getStateSpace()},
               abstractSampler{
-                      globalParameters.globalAbstractAppBaseGeometric->getSpaceInformation()->allocValidStateSampler()},
-              spaceInformation{spaceInformation} {
+                      globalParameters.globalAbstractAppBaseGeometric->getSpaceInformation()->allocValidStateSampler
+                          ()}
+    { 
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(new ompl::NearestNeighborsGNATNoThreadSafety<RegionId>());
         } else {
@@ -167,7 +170,8 @@ private:
     std::vector<Edge> edges;
     std::unique_ptr<ompl::NearestNeighbors<RegionId>> nearestRegions;
     const std::function<double(const RegionId, const RegionId)> distanceFunction;
+    const ompl::base::SpaceInformation* spaceInformation;
+    const ompl::base::StateSamplerPtr sampler;
     const ompl::base::StateSpacePtr abstractSpace;
     const ompl::base::ValidStateSamplerPtr abstractSampler;
-    const ompl::base::SpaceInformation* spaceInformation;
 };

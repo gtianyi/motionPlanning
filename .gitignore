@@ -48,9 +48,3 @@
 
 #instance input
 *.inst
-
-#.gitignore
-*gitignore*
-
-#make file
-*CMakeLists*
