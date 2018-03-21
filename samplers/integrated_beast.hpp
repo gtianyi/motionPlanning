@@ -62,12 +62,12 @@ public:
     IntegratedBeast(IntegratedBeast&&) = delete;
 
     void initialize(){
-        // TODO: get region counts from parameter file
+        // TODO: get initl region counts from parameter file
         int regionCount = 100;
         initializeRegions(regionCount);
 
-        // dijkstra or D *
-        // push outgoing edges of start region into open
+        // do dijkstra or D *
+        // push outgoing edges of the start region into open
     }
     
     void initializeRegions(const size_t regionCount) {
