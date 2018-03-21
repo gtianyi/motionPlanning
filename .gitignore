@@ -1,7 +1,8 @@
 /build
 /debug
 /cmake-build-debug
-
+/build_debug
+/experiments
 ### C++ template
 # Prerequisites
 *.d
@@ -36,3 +37,17 @@
 *.out
 *.app
 
+#plots
+*.pdf
+*.eps
+*.svg
+
+#data
+*.json
+*.csv
+
+#instance input
+*.inst
+
+#.gitignore
+*gitignore*
