@@ -14,6 +14,16 @@ using EdgeId = unsigned int;
 class IntegratedBeast {
 public:
     struct Region {
+        struct StateWrapper {
+            StateWrapper(ompl::base::State* state) : state(state) {}
+            bool operator<(const StateWrapper& w) const {
+                return selected < w.selected;
+            }
+
+            ompl::base::State* state;
+            unsigned int selected = 0;
+        };
+
         Region(unsigned int id, ompl::base::State* state)
                 : id{id}, state{state}, outEdges{}, inEdges{} {}
 
@@ -40,6 +50,19 @@ public:
 
         double calculateKey() { return std::min(g, rhs); }
 
+        ompl::base::State* sampleState() {
+            auto state = states.front();
+            std::pop_heap(states.begin(), states.end());
+            states.pop_back();
+
+            state.selected++;
+
+            states.emplace_back(state);
+            std::push_heap(states.begin(), states.end());
+
+            return state.state;
+        }
+
         const ompl::base::State* state;
         const RegionId id;
 
@@ -52,6 +75,7 @@ public:
         double rhs = std::numeric_limits<double>::infinity();
 
     private:
+        std::vector<StateWrapper> states;
         unsigned int heapIndex;
     };
 
@@ -64,11 +88,11 @@ public:
                   targetRegion{targetRegion},
                   alpha{alpha},
                   beta{beta},
-                  effort{std::numeric_limits<double>::infinity()},
+                  totalEffort{std::numeric_limits<double>::infinity()},
                   heapIndex{std::numeric_limits<unsigned int>::max()} {}
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
-            return lhs->effort < rhs->effort;
+            return lhs->totalEffort < rhs->totalEffort;
         }
 
         static unsigned int getHeapIndex(const Edge* edge) {
@@ -79,14 +103,14 @@ public:
             edge->heapIndex = heapIndex;
         }
 
-        const unsigned int sourceRegion;
-        const unsigned int targetRegion;
+        const RegionId sourceRegion;
+        const RegionId targetRegion;
         unsigned int alpha;
         unsigned int beta;
-        double effort;
+        double totalEffort;
         bool interior;
         unsigned int heapIndex;
-        double getEstimatedRequiredSamples() {
+        double getEffort() {
             return 0; // TODO
         }
     };
@@ -120,8 +144,7 @@ public:
                     new ompl::NearestNeighborsSqrtApprox<RegionId>());
         }
 
-        distanceFunction = [&globalParameters, this](
-                const RegionId& lhs, const RegionId& rhs) {
+        distanceFunction = [this](const RegionId& lhs, const RegionId& rhs) {
             return globalParameters.globalAbstractAppBaseGeometric
                     ->getStateSpace()
                     ->distance(this->regions[lhs]->state,
@@ -168,19 +191,22 @@ public:
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
         computeShortestPath();
-        auto targetEdge = open.top();
 
-        if (targetEdge->sourceId == targetEdge->targetId &&
-                targetEdge->sourceId == goalRegionId) {
-            spaceInformation->copyState(
-                    from, regions[targetEdge->sourceId].sampleState());
+        auto targetEdge = open.pop();
+
+        const RegionId sourceRegionId = targetEdge->sourceRegion;
+        const RegionId targetRegionId = targetEdge->targetRegion;
+
+        auto sourceRegionSample = regions[sourceRegionId]->sampleState();
+        spaceInformation->copyState(from, sourceRegionSample);
+
+        if (sourceRegionId == targetRegionId &&
+                sourceRegionId == goalRegionId) {
             goalRegionSampler->sampleGoal(to);
         } else {
-            spaceInformation->copyState(
-                    from, regions[targetEdge->sourceId].sampleState());
-
-            auto regionCenter = regions[targetEdge->targetId].state;
-            fullStateSampler->sampleUniformNear(to, regionCenter, stateRadius);
+            auto targetRegionCenter = regions[targetRegionId]->state;
+            fullStateSampler->sampleUniformNear(
+                    to, targetRegionCenter, stateRadius);
         }
 
         return false;
@@ -275,12 +301,11 @@ private:
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
 
-                    double effort = edge->interior ?
+                    double totalEffort = edge->interior ?
                             getInteriorEdgeEffort(edge) :
-                            u->g +
-                                    edge->getEstimatedRequiredSamples()
-                                            updateEdgeEffort(
-                                                    edge, effort, false)
+                            u->g + edge->getEffort();
+
+                    updateEdgeEffort(edge, totalEffort, false);
                 }
 
                 for (auto outEdgeId : u->outEdges) {
@@ -291,9 +316,11 @@ private:
 
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
-                    const double effort =
+
+                    const double totalEffort =
                             edge->interior ? getInteriorEdgeEffort(edge) : u->g;
-                    updateEdgeEffort(edge, effort, false);
+
+                    updateEdgeEffort(edge, totalEffort, false);
                 }
 
                 // Update this region
