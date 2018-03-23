@@ -304,8 +304,8 @@ private:
         }
     }
 
-    constexpr RegionId startRegionId{0};
-    constexpr RegionId goalRegionId{1};
+    static constexpr RegionId startRegionId{0};
+    static constexpr RegionId goalRegionId{1};
     
     const double stateRadius;
     const unsigned int regionCount;
