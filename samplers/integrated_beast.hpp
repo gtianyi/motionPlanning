@@ -94,9 +94,11 @@ public:
     IntegratedBeast(const ompl::base::SpaceInformation* spaceInformation,
             const ompl::base::State* start,
             const ompl::base::State* goal,
-            ompl::base::GoalSampleableRegion *goalSampleableRegion,
+            ompl::base::GoalSampleableRegion* goalSampleableRegion,
             const FileMap& params)
-            : start{start},
+            : stateRadius{0}, // TODO get from params
+              regionCount{0}, // TODO get from params
+              start{start},
               goal{goal},
               regions{},
               edges{},
@@ -108,8 +110,8 @@ public:
                                     ->getStateSpace()},
               abstractSampler{globalParameters.globalAbstractAppBaseGeometric
                                       ->getSpaceInformation()
-                                      ->allocValidStateSampler(),
-              goalRegionSampler{goalSampleableRegion}} {
+                                      ->allocValidStateSampler()},
+              goalRegionSampler{goalSampleableRegion} {
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(
                     new ompl::NearestNeighborsGNATNoThreadSafety<RegionId>());
@@ -122,7 +124,8 @@ public:
                 const RegionId& lhs, const RegionId& rhs) {
             return globalParameters.globalAbstractAppBaseGeometric
                     ->getStateSpace()
-                    ->distance(this->regions[lhs]->state, this->regions[rhs]->state);
+                    ->distance(this->regions[lhs]->state,
+                            this->regions[rhs]->state);
         };
 
         nearestRegions->setDistanceFunction(distanceFunction);
@@ -271,14 +274,13 @@ private:
                 u->g = u->rhs;
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
-                    if (edge->interior) {
-                        updateEdgeEffort(
-                                edge, getInteriorEdgeEffort(edge), false);
-                    } else {
-                        updateEdgeEffort(edge,
-                                u->g + edge->getEstimatedRequiredSamples(),
-                                false);
-                    }
+
+                    double effort = edge->interior ?
+                            getInteriorEdgeEffort(edge) :
+                            u->g +
+                                    edge->getEstimatedRequiredSamples()
+                                            updateEdgeEffort(
+                                                    edge, effort, false)
                 }
 
                 for (auto outEdgeId : u->outEdges) {
@@ -306,17 +308,16 @@ private:
 
     static constexpr RegionId startRegionId{0};
     static constexpr RegionId goalRegionId{1};
-    
+
     const double stateRadius;
     const unsigned int regionCount;
-    
+
     const ompl::base::State* start;
     const ompl::base::State* goal;
     std::vector<Region*> regions;
     std::vector<Edge*> edges;
     std::unique_ptr<ompl::NearestNeighbors<RegionId>> nearestRegions;
-    std::function<double(const RegionId&, const RegionId&)>
-            distanceFunction;
+    std::function<double(const RegionId&, const RegionId&)> distanceFunction;
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
     const ompl::base::StateSpacePtr abstractSpace;
