@@ -6,6 +6,7 @@
 #include <ompl/datastructures/NearestNeighborsSqrtApprox.h>
 #include <vector>
 #include "../structs/filemap.hpp"
+//#include "../structs/httplib.hpp"
 #include "../structs/inplacebinaryheap.hpp"
 
 using RegionId = unsigned int;
@@ -66,8 +67,8 @@ public:
         const ompl::base::State* state;
         const RegionId id;
 
-        std::vector<const EdgeId> outEdges;
-        std::vector<const EdgeId> inEdges;
+        std::vector<EdgeId> outEdges;
+        std::vector<EdgeId> inEdges;
 
         double key;
 
@@ -233,7 +234,7 @@ private:
         for (unsigned int i = 2; i < regionCount; ++i) {
             auto state = abstractSpace->allocState();
             abstractSampler->sample(state);
-            regions.emplace_back(i, goalState);
+            regions.push_back(new Region(i, state));
             nearestRegions->add(i);
         }
     }
@@ -248,7 +249,7 @@ private:
     }
 
     void connectRegions(Region* sourceRegion, Region* targetRegion) {
-        const EdgeId edgeId = edges.size();
+        const EdgeId edgeId = static_cast<const EdgeId>(edges.size());
         // TODO initialize alpha and beta from parameters
         int alpha = 1;
         int beta = 1;
@@ -332,6 +333,25 @@ private:
             }
         }
     }
+
+public:
+//    static void publishAbstractGraph() {
+//        std::cout << "Graph test" << std::endl;
+//        httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
+//
+//        std::ostringstream commandBuilder;
+//        commandBuilder << "{\"an\":{\"A\":{\"label\":\"Streaming\",\"size\":2}}}" << std::endl;
+//
+//        httplib::Params params;
+//        params.emplace("operation", "updateGraph");
+//
+//        std::string commandString = commandBuilder.str();
+//        
+//        std::cout << commandString << std::endl;
+////        auto res = cli.post("/workspace1?operation=updateGraph", commandString, "plain/text");
+//        auto res2 = cli.post("/workspace1?operation=updateGraph", commandString, "application/x-www-form-urlencoded");
+//        std::cout << "Graph test end" << std::endl;
+//    } 
 
     static constexpr RegionId startRegionId{0};
     static constexpr RegionId goalRegionId{1};
