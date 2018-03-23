@@ -6,7 +6,7 @@
 #include <ompl/datastructures/NearestNeighborsSqrtApprox.h>
 #include <vector>
 #include "../structs/filemap.hpp"
-//#include "../structs/httplib.hpp"
+#include "../structs/httplib.hpp"
 #include "../structs/inplacebinaryheap.hpp"
 
 using RegionId = unsigned int;
@@ -335,23 +335,39 @@ private:
     }
 
 public:
-//    static void publishAbstractGraph() {
-//        std::cout << "Graph test" << std::endl;
-//        httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
-//
-//        std::ostringstream commandBuilder;
-//        commandBuilder << "{\"an\":{\"A\":{\"label\":\"Streaming\",\"size\":2}}}" << std::endl;
-//
-//        httplib::Params params;
-//        params.emplace("operation", "updateGraph");
-//
-//        std::string commandString = commandBuilder.str();
-//        
-//        std::cout << commandString << std::endl;
-////        auto res = cli.post("/workspace1?operation=updateGraph", commandString, "plain/text");
-//        auto res2 = cli.post("/workspace1?operation=updateGraph", commandString, "application/x-www-form-urlencoded");
-//        std::cout << "Graph test end" << std::endl;
-//    } 
+    void publishAbstractGraph() {
+        std::cout << "Graph test" << std::endl;
+        httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
+
+        std::ostringstream commandBuilder;
+
+        for (auto* region : regions) {
+            commandBuilder
+                    << "{\"an\":{\"" << region->id << "\":{\"label\":\"Streaming\",\"size\":2}}}"
+                    << std::endl;
+        }
+
+        for (auto* edge : edges) {
+            commandBuilder
+                << "{\"ae\":{\"" << edge << "\":{"
+                << "\"source\":\"" << edge->sourceRegion << "\","
+                << "\"target\":\"" << edge->targetRegion << "\"}}}"
+                << std::endl;
+        }
+
+        std::string commandString = commandBuilder.str();
+
+        std::cout << commandString << std::endl;
+        auto res = cli.post("/workspace1?operation=updateGraph",
+                commandString,
+                "plain/text");
+        //        auto res2 = cli.post("/workspace1?operation=updateGraph",
+        //        commandString, "application/x-www-form-urlencoded");
+
+        std::cout << res->status << std::endl;
+        std::cout << res->body << std::endl;
+        std::cout << "Graph test end" << std::endl;
+    }
 
     static constexpr RegionId startRegionId{0};
     static constexpr RegionId goalRegionId{1};
