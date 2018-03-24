@@ -29,6 +29,12 @@ GlobalParameters globalParameters;
 // #include "domains/robotarm.hpp"
 // #include "domains/acrobot.hpp"
 
+#include "samplers/beastsampler_dstar.hpp"
+#include "samplers/beastsampler_dijkstra.hpp"
+#include "samplers/beastsampler_dstarNewBonus.hpp"
+#include "samplers/beastsampler_dstarNoGeometricTest.hpp"
+#include "samplers/integrated_beast.hpp"
+
 #include "planners/fbiasedrrt.hpp"
 #include "planners/fbiasedshellrrt.hpp"
 #include "planners/plakurrt.hpp"
@@ -77,7 +83,25 @@ void doBenchmarkRun(BenchmarkData benchmarkData, const FileMap &params) {
   } else if(planner.compare("PlakuRRT") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::PlakuRRT(spaceInformation, params));
   } else if(planner.compare("BEAST") == 0) {
-    plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner(spaceInformation, params));
+        auto whichSearch = params.stringVal("WhichSearch");
+        if(whichSearch.compare("D*") == 0) {
+          plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner<ompl::base::BeastSampler_dstar>(spaceInformation, params));
+        } else if(whichSearch.compare("Dijkstra") == 0) {
+          plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner<ompl::base::BeastSampler_dijkstra>
+                                                      (spaceInformation, params));
+        } else if(whichSearch.compare("D*BONUS") == 0) {
+          plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner<ompl::base::BeastSampler_dstarNewBonus>
+                                                      (spaceInformation, params));
+        } else if(whichSearch.compare("D*NOGEOMETRIC") == 0) {
+          plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner<ompl::base::BeastSampler_dstarNoGeometricTest>
+                                                      (spaceInformation, params));
+        } else if(whichSearch.compare("Integrated") == 0) {
+          plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlanner<IntegratedBeast>
+                                                      (spaceInformation, params));
+        } else {
+            throw ompl::Exception("Unrecognized best first search type", whichSearch.c_str());
+        }
+
   } else if(planner.compare("BEASTnew") == 0) {
     plannerPointer = ompl::base::PlannerPtr(new ompl::control::BeastPlannernew(spaceInformation, params));
   } else if(planner.compare("BEASTUpdateRightEdge") == 0) {

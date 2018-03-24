@@ -342,17 +342,21 @@ public:
         std::ostringstream commandBuilder;
 
         for (auto* region : regions) {
-            commandBuilder
-                    << "{\"an\":{\"" << region->id << "\":{\"label\":\"Streaming\",\"size\":2}}}"
-                    << std::endl;
+            auto se3state =
+                    region->state
+                            ->as<ompl::base::CompoundStateSpace::StateType>()
+                            ->as<ompl::base::SE3StateSpace::StateType>(0);
+            
+            commandBuilder << "{\"an\":{\"" << region->id
+                           << "\":{\"label\":\"Streaming\",\"size\":2}}}"
+                           << std::endl;
         }
 
         for (auto* edge : edges) {
-            commandBuilder
-                << "{\"ae\":{\"" << edge << "\":{"
-                << "\"source\":\"" << edge->sourceRegion << "\","
-                << "\"target\":\"" << edge->targetRegion << "\"}}}"
-                << std::endl;
+            commandBuilder << "{\"ae\":{\"" << edge << "\":{"
+                           << "\"source\":\"" << edge->sourceRegion << "\","
+                           << "\"target\":\"" << edge->targetRegion << "\"}}}"
+                           << std::endl;
         }
 
         std::string commandString = commandBuilder.str();
