@@ -161,6 +161,7 @@ public:
     ~IntegratedBeast() {
         // Free all regions and edges
         for (auto region : regions) {
+            abstractSpace->freeState(const_cast<ompl::base::State*>(region->state));
             delete region;
         }
 
