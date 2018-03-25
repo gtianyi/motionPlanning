@@ -51,6 +51,11 @@ public:
 
         double calculateKey() { return std::min(g, rhs); }
 
+        void addState(ompl::base::State* state) {
+            states.emplace_back(state);
+	    std::push_heap(states.begin(), states.end());
+        }
+
         ompl::base::State* sampleState() {
             auto state = states.front();
             std::pop_heap(states.begin(), states.end());
@@ -74,6 +79,8 @@ public:
 
         double g = std::numeric_limits<double>::infinity();
         double rhs = std::numeric_limits<double>::infinity();
+
+        unsigned int statesCount;
 
     private:
         std::vector<StateWrapper> states;
@@ -111,20 +118,41 @@ public:
         double totalEffort;
         bool interior;
         unsigned int heapIndex;
-        double getEffort() {
-            return 0; // TODO
+        double getEffort() const {
+            if (alpha <= 0) {
+                throw ompl::Exception("IntegratedBeast::Edge::getEffort",
+                        "Alpha value must be greater than 0");
+            }
+            return (alpha + beta) / alpha;
+        }
+
+        double getBonusEffort(unsigned int numberOfStates) const {
+            if (alpha <= 0) {
+                throw ompl::Exception("IntegratedBeast::Edge::getBonusEffort",
+                        "Alpha value must be greater than 0");
+            }
+
+            double probability = (alpha / (alpha + beta)) *
+                            ((numberOfStates - 1) / numberOfStates) +
+                    (1. / numberOfStates);
+            double estimate = 1. / probability;
+
+	    return estimate;
         }
     };
 
     IntegratedBeast(const ompl::base::SpaceInformation* spaceInformation,
             const ompl::base::State* start,
-            const ompl::base::State* goal,
+            const ompl::base::GoalPtr& goalPtr,
             ompl::base::GoalSampleableRegion* goalSampleableRegion,
             const FileMap& params)
-            : stateRadius{0}, // TODO get from params
-              regionCount{0}, // TODO get from params
+            : stateRadius{params.doubleVal("StateRadius")},
+              regionCount{params.integerVal("RegionCount")},
+              neighborEdgeCount{params.integerVal("NumEdges")},
+              initialAlpha{params.integerVal("InitialAlpha")},
+              initialBeta{params.integerVal("InitialBeta")},
               start{start},
-              goal{goal},
+              goal{goalPtr.get()->as<ompl::base::GoalState>()->getState()},
               regions{},
               edges{},
               nearestRegions{},
@@ -171,12 +199,9 @@ public:
     }
 
     void initialize() {
-        // TODO: get region counts from parameter file
-        int regionCount = 100;
         initializeRegions(regionCount);
-
-        // do dijkstra or D *
-        // push outgoing edges of the start region into open
+        computeShortestPath();
+        addOutgoingEdgesToOpen(startRegionId);
     }
 
     void initializeRegions(const size_t regionCount) {
@@ -206,15 +231,30 @@ public:
                 sourceRegionId == goalRegionId) {
             goalRegionSampler->sampleGoal(to);
         } else {
+            // sample near is wrong,  it may not inside boundary,
+            // we the need sampling technique wheeler introduct
             auto targetRegionCenter = regions[targetRegionId]->state;
             fullStateSampler->sampleUniformNear(
                     to, targetRegionCenter, stateRadius);
         }
 
-        return false;
+        return true;
     }
 
-    void reached(ompl::base::State* state) { return; }
+    void reached(ompl::base::State* state) {
+//      ompl::base::ScopedState <>  incomingState(si_->getStateSpace());
+//      incomingState =  state;
+//      RegionId regionId =  stateToRegionId(incomingState);
+//
+//      regions[regionId].addState(state);
+//
+//      if (targetEdge != NULL && regionId == targetEdge->endID) {
+//          targetSuccess = true;
+//      } else {
+//          addOutgoingEdgesToOpen(regionId);
+//      }
+      return;
+    }
 
 private:
     virtual void generateRegions(const size_t regionCount) {
@@ -242,21 +282,16 @@ private:
 
     void connectRegions() {
         for (auto& region : regions) {
-            // Add k neighbors
-            // TODO initialize edge count
-            int edgeCount = 5;
-            addKNeighbors(region, edgeCount);
+	  // Add k neighbors
+	  addKNeighbors(region, neighborEdgeCount);
         }
     }
 
     void connectRegions(Region* sourceRegion, Region* targetRegion) {
         const EdgeId edgeId = static_cast<const EdgeId>(edges.size());
-        // TODO initialize alpha and beta from parameters
-        int alpha = 1;
-        int beta = 1;
 
-        edges.push_back(
-                new Edge(sourceRegion->id, targetRegion->id, alpha, beta));
+        edges.push_back(new Edge(
+                sourceRegion->id, targetRegion->id, initialAlpha, initialBeta));
 
         sourceRegion->outEdges.push_back(edgeId);
         targetRegion->inEdges.push_back(edgeId);
@@ -278,15 +313,38 @@ private:
     }
 
     double getInteriorEdgeEffort(Edge* edge) {
-        // TODO
+        double numberOfStates = regions[edge->targetRegion]->statesCount;
+
+        double bestValue = std::numeric_limits<double>::infinity();
+        std::vector<EdgeId> outEdgeIds =
+                regions[edge->targetRegion]->outEdges;
+
+        for (auto n : outEdgeIds) {
+	  Edge* e = edges[n];
+	  double value = e->getBonusEffort(numberOfStates) + regions[n]->g;
+
+          if (value < bestValue) {
+              bestValue = value;
+          }
+        }
+
+        return bestValue;
     }
 
-    void updateRegion(const unsigned int region) {
-        // TODO
+    void addOutgoingEdgesToOpen(RegionId region) {
+        for (auto edgeId : regions[region]->outEdges) {
+            if (!open.inHeap(edges[edgeId])) {
+                open.push(edges[edgeId]);
+			}
+	   }
     }
 
-    void updateEdgeEffort(Edge* edge, double effort, bool b) {
-        // TODO
+    void insertOrUpdateOpen(Edge* edge) {
+        if (!open.inHeap(edge)) {
+            open.push(edge);
+        } else {
+            open.siftFromItem(edge);
+        }      
     }
 
     void computeShortestPath() {
@@ -307,7 +365,7 @@ private:
                             getInteriorEdgeEffort(edge) :
                             u->g + edge->getEffort();
 
-                    updateEdgeEffort(edge, totalEffort, false);
+                    edge->totalEffort = totalEffort;
                 }
 
                 for (auto outEdgeId : u->outEdges) {
@@ -319,10 +377,11 @@ private:
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
 
-                    const double totalEffort =
-                            edge->interior ? getInteriorEdgeEffort(edge) : u->g;
+                    const double totalEffort = edge->interior ?
+                            getInteriorEdgeEffort(edge) :
+                            u->g + edge->getEffort();
 
-                    updateEdgeEffort(edge, totalEffort, false);
+		    edge->totalEffort = totalEffort;
                 }
 
                 // Update this region
@@ -347,7 +406,7 @@ public:
                     region->state
                             ->as<ompl::base::CompoundStateSpace::StateType>()
                             ->as<ompl::base::SE3StateSpace::StateType>(0);
-            
+
             commandBuilder << "{\"an\":{\"" << region->id
                            << "\":{\"label\":\"Streaming\",\"size\":2}}}"
                            << std::endl;
@@ -374,11 +433,51 @@ public:
         std::cout << "Graph test end" << std::endl;
     }
 
-    static constexpr RegionId startRegionId{0};
-    static constexpr RegionId goalRegionId{1};
+    void updateRegion(const unsigned int region) {
+      Region* s = regions[region];
+        if (s->id != goalRegionId) {
+            double minValue = std::numeric_limits<double>::infinity();
+	    
+            std::vector<EdgeId> outEdgeIds = s->outEdges;
+	    
+            for (auto n : outEdgeIds) {
+	      Edge* e = edges[n];
+	      double value = regions[n]->g + e->getEffort();
+                if (value < minValue) {
+                    minValue = value;
+                }
+            }
+            s->rhs = minValue;
+        }
+
+        if (inconsistentRegions.inHeap(regions[region])) {
+            inconsistentRegions.remove(regions[region]);
+        }
+
+        if (s->g != s->rhs) {
+            s->key = s->calculateKey();
+            inconsistentRegions.push(regions[region]);
+        }
+    }
+
+ 	 RegionId stateToRegionId(const ompl::base::ScopedState <>& s){
+        //- 1 is intentional overflow on unsigned int
+//        auto ss = globalParameters.globalAppBaseControl
+//                          ->getGeometricComponentState(s, -1);
+//
+//        Region center(10000,ss.get());
+//        return nearestRegions->nearest(&center)->id;
+        return 0;
+     }
+
+    const RegionId startRegionId{0};
+    const RegionId goalRegionId{1};
 
     const double stateRadius;
     const unsigned int regionCount;
+    const unsigned int neighborEdgeCount;
+    const unsigned int initialAlpha;
+    const unsigned int initialBeta;
 
     const ompl::base::State* start;
     const ompl::base::State* goal;
@@ -395,3 +494,4 @@ public:
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
 };
+

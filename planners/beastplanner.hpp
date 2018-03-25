@@ -12,6 +12,7 @@
 #include "../samplers/beastsampler_dstarNewBonus.hpp"
 #include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
 #include "../samplers/integrated_beast.hpp"
+
 #include <limits>
 
 namespace ompl {
