@@ -490,7 +490,7 @@ public:
     std::vector<Region*> regions;
     std::vector<Edge*> edges;
     std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
-    std::function<double(const RegionId&, const RegionId&)> distanceFunction;
+    std::function<double(const Region*, const Region*)> distanceFunction;
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
     const ompl::base::StateSpacePtr abstractSpace;
