@@ -59,20 +59,7 @@ public:
                 this,
                 &BeastPlanner::ignoreSetterDouble,
                 &BeastPlanner::getInvalidEdgeDistributionBeta);
-
-        // Obviously this isn't really a parameter but I have no idea how else
-        // to get it into the output file through the benchmarker
-        Planner::declareParam<double>("sampler_initialization_time",
-                this,
-                &BeastPlanner::ignoreSetterDouble,
-                &BeastPlanner::getSamplerInitializationTime);
-
-        auto start = clock();
-
-        sampler->initialize();
-
-        samplerInitializationTime = (double)(clock() - start) / CLOCKS_PER_SEC;
-    }
+   }
 
     virtual ~BeastPlanner() {}
 
@@ -111,7 +98,9 @@ public:
                         dynamic_cast<base::GoalSampleableRegion*>(
                                 pdef_->getGoal().get()),
                         params));
-    }
+
+        sampler->initialize();
+}
 
     /** \brief Continue solving for some amount of time. Return true if solution
      * was found. */

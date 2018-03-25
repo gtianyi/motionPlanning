@@ -223,7 +223,16 @@ public:
     void splitRegion() {}
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
-        computeShortestPath();
+        
+		if(targetSuccess){
+			targetEdge->alpha++;
+			targetEdge->interior=true;	
+		}
+		else{
+			targetEdge->beta++;
+		}
+		
+		computeShortestPath();
 
         auto targetEdge = open.pop();
 
@@ -248,18 +257,17 @@ public:
     }
 
     void reached(ompl::base::State* state) {
-        //      ompl::base::ScopedState <>  incomingState(si_->getStateSpace());
-        //      incomingState =  state;
-        //      RegionId regionId =  stateToRegionId(incomingState);
-        //
-        //      regions[regionId].addState(state);
-        //
-        //      if (targetEdge != NULL && regionId == targetEdge->endID) {
-        //          targetSuccess = true;
-        //      } else {
-        //          addOutgoingEdgesToOpen(regionId);
-        //      }
-        return;
+        ompl::base::ScopedState<> incomingState(spaceInformation->getStateSpace());
+        incomingState = state;
+        RegionId regionId = stateToRegionId(incomingState);
+
+        regions[regionId]->addState(state);
+
+        if (targetEdge != NULL && regionId == targetEdge->targetRegion) {
+            targetSuccess = true;
+        } else {
+            addOutgoingEdgesToOpen(regionId);
+        }
     }
 
 private:
@@ -468,12 +476,11 @@ public:
 
     RegionId stateToRegionId(const ompl::base::ScopedState<>& s) {
         //- 1 is intentional overflow on unsigned int
-        //        auto ss = globalParameters.globalAppBaseControl
-        //                          ->getGeometricComponentState(s, -1);
-        //
-        //        Region center(10000,ss.get());
-        //        return nearestRegions->nearest(&center)->id;
-        return 0;
+        auto ss = globalParameters.globalAppBaseControl
+                          ->getGeometricComponentState(s, -1);
+
+        Region center(10000, ss.get());
+        return nearestRegions->nearest(&center)->id;
     }
 
     const RegionId startRegionId;
@@ -499,4 +506,6 @@ public:
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
+	Edge* targetEdge;
+	bool targetSuccess;
 };
