@@ -40,13 +40,13 @@ StateRadius ? 6
 
 WhichSearch ? D*
 
-ValidEdgeDistributionAlpha ? 10
+ValidEdgeDistributionAlpha ? 3
 
 ValidEdgeDistributionBeta ? 1
 
-InvalidEdgeDistributionAlpha ? 1
+InvalidEdgeDistributionAlpha ? 3
 
-InvalidEdgeDistributionBeta ? 10
+InvalidEdgeDistributionBeta ? 1
 
 SelectionRadius ? 2.0
 
@@ -62,6 +62,6 @@ CostPruningStyle ? G
 
 Sampler ? BEATS
 
-ImportantSampling ? TRUE
+ImportantSampling ? FALSE
 
 ImportantSampleWeight ? 0.5

@@ -1,14 +1,14 @@
-Timeout ? 300
+Timeout ? 60
 
-Memory ? 1000
+Memory ? 15000
 
 AddIntermediateStates ? true
 
-Seed ? 2
+Seed ? 18
 
 Runs ? 1
 
-Domain ? Quadrotor
+Domain ? DynamicCar
  
 PropagationStepSize ? 0.05
 
@@ -18,7 +18,7 @@ MaxControlDuration ? 100
 
 GoalRadius ? 1
 
-Start ? 3 -5
+Start ? 0 0
 
 Goal ? 0 -25
 
@@ -28,11 +28,11 @@ EnvironmentMesh ? forest.dae
 
 AgentMesh ? car2_planar_robot.dae
 
-Planner ? Atempts
+Planner ? GUST
  
-AbstractionType ? PRM
+AbstractionType ? PRM_GUST
 
-NumEdges ? 3
+NumEdges ? 5
 
 PRMSize ? 100
 
@@ -60,6 +60,16 @@ SSTStyle ? SSTStar
 
 CostPruningStyle ? G
 
-Sampler ? BEAST
+Sampler ? PRM
 
-Output ? outfile-atempts-small
+Output ? outfile-gust-small
+
+UseSplit ? 1
+
+Alpha ? 8
+
+B ? 0.85
+
+Beta ? 0.85
+
+Delta ? 0.15

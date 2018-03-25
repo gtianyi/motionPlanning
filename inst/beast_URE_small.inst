@@ -4,11 +4,11 @@ Memory ? 1000
 
 AddIntermediateStates ? true
 
-Seed ? 2
+Seed ? 15
 
 Runs ? 1
 
-Domain ? Quadrotor
+Domain ? KinematicCar
  
 PropagationStepSize ? 0.05
 
@@ -18,9 +18,9 @@ MaxControlDuration ? 100
 
 GoalRadius ? 1
 
-Start ? 3 -5
+Start ? -5 -5
 
-Goal ? 0 -25
+Goal ? 5 -25
 
 EnvironmentBounds ? -30 30 -30 30 
 
@@ -32,7 +32,7 @@ Planner ? BEASTUpdateRightEdge
  
 AbstractionType ? PRM
 
-NumEdges ? 3
+NumEdges ? 5
 
 PRMSize ? 1000
 

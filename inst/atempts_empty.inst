@@ -1,4 +1,4 @@
-Timeout ? 900
+Timeout ? 60
 
 Memory ? 1000
 
@@ -34,7 +34,7 @@ AbstractionType ? PRM
 
 NumEdges ? 3
 
-PRMSize ? 100
+PRMSize ? 2000
 
 StateRadius ? 6
 

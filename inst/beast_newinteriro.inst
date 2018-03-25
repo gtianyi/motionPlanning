@@ -1,5 +1,5 @@
 #This is how long the planner is allowed to run
-Timeout ? 300
+Timeout ? 60
 
 #This is how much memory the planner is allowed to use (MB)
 Memory ? 1000
@@ -11,7 +11,7 @@ Seed ? 1
 Runs ? 1
 
 #This is the filename where you want the results to be stored
-#Output ? beast-new-outfile
+#Output ? beast-newinterior-outfile
 
 #This is an OMPL parameter for using intermediate states when propagating, you'll almost always want this to be true
 AddIntermediateStates ? true
@@ -52,10 +52,10 @@ Goal ? -15 7 5
 GoalRadius ? 1
 
 #Finally the planner to be used
-Planner ? BEASTnew
+Planner ? BEAST
 
 #Beast which search
-WhichSearch ? D*Dis
+WhichSearch ? D*BONUS
 
 StateRadius ? 5
 
@@ -63,12 +63,12 @@ PRMSize ? 1000
 
 NumEdges ? 5
 
-ValidEdgeDistributionAlpha ? 10
+ValidEdgeDistributionAlpha ? 1
 
 ValidEdgeDistributionBeta ? 1
 
 InvalidEdgeDistributionAlpha ? 1
 
-InvalidEdgeDistributionBeta ? 10
+InvalidEdgeDistributionBeta ? 1
 
 
