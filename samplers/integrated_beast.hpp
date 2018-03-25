@@ -173,17 +173,16 @@ public:
               goalRegionSampler{goalSampleableRegion} {
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(
-                    new ompl::NearestNeighborsGNATNoThreadSafety<RegionId>());
+                    new ompl::NearestNeighborsGNATNoThreadSafety<Region*>());
         } else {
             nearestRegions.reset(
-                    new ompl::NearestNeighborsSqrtApprox<RegionId>());
+                    new ompl::NearestNeighborsSqrtApprox<Region*>());
         }
 
-        distanceFunction = [this](const RegionId& lhs, const RegionId& rhs) {
+        distanceFunction = [this](const Region* lhs, const Region* rhs) {
             return globalParameters.globalAbstractAppBaseGeometric
                     ->getStateSpace()
-                    ->distance(this->regions[lhs]->state,
-                            this->regions[rhs]->state);
+                    ->distance(lhs->state, rhs->state);
         };
 
         nearestRegions->setDistanceFunction(distanceFunction);
@@ -270,20 +269,23 @@ private:
         // Add start
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, start);
-        regions.push_back(new Region(startRegionId, startState));
-        nearestRegions->add(startRegionId);
+        Region* startRegion = new Region(startRegionId, startState);
+        regions.push_back(startRegion);
+        nearestRegions->add(startRegion);
 
         // Add goal
         auto goalState = abstractSpace->allocState();
         abstractSpace->copyState(goalState, goal);
-        regions.push_back(new Region(goalRegionId, startState));
-        nearestRegions->add(goalRegionId);
+        Region* goalRegion = new Region(goalRegionId, startState);
+        regions.push_back(goalRegion);
+        nearestRegions->add(goalRegion);
 
         for (unsigned int i = 2; i < regionCount; ++i) {
             auto state = abstractSpace->allocState();
             abstractSampler->sample(state);
-            regions.push_back(new Region(i, state));
-            nearestRegions->add(i);
+            Region* region = new Region(i, state);
+            regions.push_back(region);
+            nearestRegions->add(region);
         }
     }
 
@@ -305,15 +307,13 @@ private:
     }
 
     void addKNeighbors(Region* sourceRegion, size_t edgeCount) {
-        std::vector<RegionId> neighborIds;
-        nearestRegions->nearestK(sourceRegion->id, edgeCount, neighborIds);
+        std::vector<Region*> neighbors;
+        nearestRegions->nearestK(sourceRegion, edgeCount, neighbors);
 
-        for (RegionId neighborId : neighborIds) {
-            if (sourceRegion->id == neighborId)
+        for (auto neighborRegion : neighbors) {
+            if (sourceRegion == neighborRegion)
                 continue;
-
-            auto neighborRegion = regions[neighborId];
-
+            
             connectRegions(sourceRegion, neighborRegion);
             connectRegions(neighborRegion, sourceRegion);
         }
@@ -489,7 +489,7 @@ public:
     const ompl::base::State* goal;
     std::vector<Region*> regions;
     std::vector<Edge*> edges;
-    std::unique_ptr<ompl::NearestNeighbors<RegionId>> nearestRegions;
+    std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
     std::function<double(const RegionId&, const RegionId&)> distanceFunction;
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
