@@ -11,18 +11,25 @@
 #include "../samplers/beastsampler_dijkstra.hpp"
 #include "../samplers/beastsampler_dstarNewBonus.hpp"
 #include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
+#include "../samplers/integrated_beast.hpp"
 #include <limits>
 
 namespace ompl {
 
 namespace control {
 
+template <typename Sampler>
 class BeastPlanner : public ompl::control::RRT {
   public:
 
     /** \brief Constructor */
     BeastPlanner(const SpaceInformationPtr &si, const FileMap &params) :
-            ompl::control::RRT(si), newsampler_(NULL), params(params) {
+            ompl::control::RRT(si), newsampler_(NULL), params(params), 
+            sampler(
+                (ompl::base::SpaceInformation *)siC_,
+                pdef_->getStartState(0),
+                pdef_->getGoal(),
+                dynamic_cast<base::GoalSampleableRegion *>(pdef_->getGoal().get()), params) {
 
         whichSearch = params.stringVal("WhichSearch");
 
@@ -40,6 +47,12 @@ class BeastPlanner : public ompl::control::RRT {
 
         //Obviously this isn't really a parameter but I have no idea how else to get it into the output file through the benchmarker
         Planner::declareParam<double>("sampler_initialization_time", this, &BeastPlanner::ignoreSetterDouble, &BeastPlanner::getSamplerInitializationTime);
+
+        auto start = clock();
+
+        newsampler_->initialize();
+
+        samplerInitializationTime = (double)(clock() - start) / CLOCKS_PER_SEC;
     }
 
     virtual ~BeastPlanner() {}
@@ -90,30 +103,6 @@ class BeastPlanner : public ompl::control::RRT {
             return base::PlannerStatus::INVALID_START;
         }
 
-        if(!newsampler_) {
-            auto start = clock();
-
-            if(whichSearch.compare("D*") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dstar((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                 goal_s, params);
-            } else if(whichSearch.compare("Dijkstra") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dijkstra((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                    goal_s, params);
-            } else if(whichSearch.compare("D*BONUS") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dstarNewBonus((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                    goal_s, params);            
-            } else if(whichSearch.compare("D*NOGEOMETRIC") == 0) {
-                newsampler_ = new ompl::base::BeastSampler_dstarNoGeometricTest((ompl::base::SpaceInformation *)siC_, pdef_->getStartState(0), pdef_->getGoal(),
-                                                                    goal_s, params);            
-            } else {
-                throw ompl::Exception("Unrecognized best first search type", whichSearch.c_str());
-            }
-		
-
-            newsampler_->initialize();
-
-            samplerInitializationTime = (double)(clock() - start) / CLOCKS_PER_SEC;
-        }
         if(!controlSampler_)
             controlSampler_ = siC_->allocDirectedControlSampler();
 
@@ -294,6 +283,7 @@ class BeastPlanner : public ompl::control::RRT {
 
   protected:
 
+    Sampler sampler;
     ompl::base::BeastSamplerBase *newsampler_;
     const FileMap &params;
     std::string whichSearch;
