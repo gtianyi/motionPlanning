@@ -162,7 +162,6 @@ public:
               regions{},
               edges{},
               nearestRegions{},
-              distanceFunction{},
               spaceInformation{spaceInformation},
               fullStateSampler{spaceInformation->allocStateSampler()},
               abstractSpace{globalParameters.globalAbstractAppBaseGeometric
