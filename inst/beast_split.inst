@@ -47,3 +47,12 @@ InitialAlpha ? 1
 InitialBeta ? 1
 
 Output ? outfile-beast-split-small
+
+ValidEdgeDistributionAlpha ? 10
+
+ValidEdgeDistributionBeta ? 1
+
+InvalidEdgeDistributionAlpha ? 1
+
+InvalidEdgeDistributionBeta ? 10
+

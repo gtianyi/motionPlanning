@@ -194,8 +194,8 @@ public:
     ~IntegratedBeast() {
         // Free all regions and edges
         for (auto region : regions) {
-            abstractSpace->freeState(
-                    const_cast<ompl::base::State*>(region->state));
+            //    abstractSpace->freeState(
+            //            const_cast<ompl::base::State*>(region->state));
             delete region;
         }
 
@@ -223,19 +223,20 @@ public:
     void splitRegion() {}
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
-        
-		if(targetSuccess){
-			targetEdge->alpha++;
-			targetEdge->interior=true;	
-		}
-		else{
-			targetEdge->beta++;
-		}
-		
-		computeShortestPath();
+
+        if (targetEdge != nullptr) {
+            if (targetSuccess) {
+                targetEdge->alpha++;
+                targetEdge->interior = true;
+            } else {
+                targetEdge->beta++;
+            }
+        }
+
+        computeShortestPath();
 
         auto targetEdge = open.pop();
-
+		targetSuccess = false;
         const RegionId sourceRegionId = targetEdge->sourceRegion;
         const RegionId targetRegionId = targetEdge->targetRegion;
 
@@ -247,17 +248,27 @@ public:
             goalRegionSampler->sampleGoal(to);
         } else {
             // sample near is wrong,  it may not inside boundary,
-            // we the need sampling technique wheeler introduct
-            auto targetRegionCenter = regions[targetRegionId]->state;
+            // we need the sampling technique wheeler introduce
+            ompl::base::ScopedState<> targetRegionCenter(
+                    globalParameters.globalAppBaseControl
+                            ->getGeometricComponentStateSpace());
+
+            targetRegionCenter = regions[targetRegionId]->state;
+            ompl::base::ScopedState<> fullState =
+                   	 globalParameters.globalAppBaseControl
+                    	        ->getFullStateFromGeometricComponent(
+                     	            targetRegionCenter);
+
             fullStateSampler->sampleUniformNear(
-                    to, targetRegionCenter, stateRadius);
+                    to, fullState.get(), stateRadius);
         }
 
         return true;
     }
 
     void reached(ompl::base::State* state) {
-        ompl::base::ScopedState<> incomingState(spaceInformation->getStateSpace());
+        ompl::base::ScopedState<> incomingState(
+                spaceInformation->getStateSpace());
         incomingState = state;
         RegionId regionId = stateToRegionId(incomingState);
 
@@ -278,6 +289,7 @@ private:
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, start);
         Region* startRegion = new Region(startRegionId, startState);
+		startRegion->addState(startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
 
@@ -506,6 +518,6 @@ public:
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
-	Edge* targetEdge;
-	bool targetSuccess;
+	Edge* targetEdge = nullptr;
+	bool targetSuccess = false;
 };
