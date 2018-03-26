@@ -16,7 +16,7 @@ class IntegratedBeast {
 public:
     struct Region {
         struct StateWrapper {
-            StateWrapper(ompl::base::State* state) : state(state) {}
+            explicit StateWrapper(ompl::base::State* state) : state(state) {}
             bool operator<(const StateWrapper& w) const {
                 return selected < w.selected;
             }
@@ -179,20 +179,18 @@ public:
                     new ompl::NearestNeighborsSqrtApprox<Region*>());
         }
 
-        distanceFunction = [this](const Region* lhs, const Region* rhs) {
-            return globalParameters.globalAbstractAppBaseGeometric
-                    ->getStateSpace()
-                    ->distance(lhs->state, rhs->state);
-        };
-
-        nearestRegions->setDistanceFunction(distanceFunction);
+        nearestRegions->setDistanceFunction(
+                [&globalParameters](const Region* lhs, const Region* rhs) {
+                    return globalParameters.globalAbstractAppBaseGeometric
+                            ->getStateSpace()
+                            ->distance(lhs->state, rhs->state);
+                });
     }
 
     IntegratedBeast(const IntegratedBeast&) = delete;
     IntegratedBeast(IntegratedBeast&&) = delete;
 
     ~IntegratedBeast() {
-        // Free all regions and edges
         for (auto region : regions) {
             //    abstractSpace->freeState(
             //            const_cast<ompl::base::State*>(region->state));
@@ -223,7 +221,6 @@ public:
     void splitRegion() {}
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
-
         if (targetEdge != nullptr) {
             if (targetSuccess) {
                 targetEdge->alpha++;
@@ -236,7 +233,7 @@ public:
         computeShortestPath();
 
         auto targetEdge = open.pop();
-		targetSuccess = false;
+        targetSuccess = false;
         const RegionId sourceRegionId = targetEdge->sourceRegion;
         const RegionId targetRegionId = targetEdge->targetRegion;
 
@@ -255,9 +252,9 @@ public:
 
             targetRegionCenter = regions[targetRegionId]->state;
             ompl::base::ScopedState<> fullState =
-                   	 globalParameters.globalAppBaseControl
-                    	        ->getFullStateFromGeometricComponent(
-                     	            targetRegionCenter);
+                    globalParameters.globalAppBaseControl
+                            ->getFullStateFromGeometricComponent(
+                                    targetRegionCenter);
 
             fullStateSampler->sampleUniformNear(
                     to, fullState.get(), stateRadius);
@@ -274,7 +271,7 @@ public:
 
         regions[regionId]->addState(state);
 
-        if (targetEdge != NULL && regionId == targetEdge->targetRegion) {
+        if (targetEdge != nullptr && regionId == targetEdge->targetRegion) {
             targetSuccess = true;
         } else {
             addOutgoingEdgesToOpen(regionId);
@@ -289,7 +286,7 @@ private:
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, start);
         Region* startRegion = new Region(startRegionId, startState);
-		startRegion->addState(startState);
+        startRegion->addState(startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
 
@@ -311,7 +308,6 @@ private:
 
     void connectRegions() {
         for (auto& region : regions) {
-            // Add k neighbors
             addKNeighbors(region, neighborEdgeCount);
         }
     }
@@ -333,14 +329,14 @@ private:
         for (auto neighborRegion : neighbors) {
             if (sourceRegion == neighborRegion)
                 continue;
-            
+
             connectRegions(sourceRegion, neighborRegion);
             connectRegions(neighborRegion, sourceRegion);
         }
     }
 
     double getInteriorEdgeEffort(Edge* edge) {
-        double numberOfStates = regions[edge->targetRegion]->statesCount;
+        const auto numberOfStates = regions[edge->targetRegion]->statesCount;
 
         double bestValue = std::numeric_limits<double>::infinity();
         std::vector<EdgeId> outEdgeIds = regions[edge->targetRegion]->outEdges;
@@ -451,8 +447,6 @@ public:
         auto res = cli.post("/workspace1?operation=updateGraph",
                 commandString,
                 "plain/text");
-        //        auto res2 = cli.post("/workspace1?operation=updateGraph",
-        //        commandString, "application/x-www-form-urlencoded");
 
         std::cout << res->status << std::endl;
         std::cout << res->body << std::endl;
@@ -498,26 +492,25 @@ public:
     const RegionId startRegionId;
     const RegionId goalRegionId;
 
-    const double stateRadius;
-    const unsigned int regionCount;
-    const unsigned int neighborEdgeCount;
-    const unsigned int initialAlpha;
-    const unsigned int initialBeta;
+    const double stateRadius{};
+    const unsigned int regionCount{};
+    const unsigned int neighborEdgeCount{};
+    const unsigned int initialAlpha{};
+    const unsigned int initialBeta{};
 
     const ompl::base::State* start;
-    const ompl::base::State* goal;
-    std::vector<Region*> regions;
-    std::vector<Edge*> edges;
-    std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
-    std::function<double(const Region*, const Region*)> distanceFunction;
+    const ompl::base::State* goal{};
+    std::vector<Region*> regions{};
+    std::vector<Edge*> edges{};
+    std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions{};
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
     const ompl::base::StateSpacePtr abstractSpace;
     const ompl::base::ValidStateSamplerPtr abstractSampler;
-    const ompl::base::GoalSampleableRegion* goalRegionSampler;
+    const ompl::base::GoalSampleableRegion* goalRegionSampler{};
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
-	Edge* targetEdge = nullptr;
-	bool targetSuccess = false;
+    Edge* targetEdge = nullptr;
+    bool targetSuccess = false;
 };
