@@ -54,6 +54,7 @@ public:
         void addState(ompl::base::State* state) {
             states.emplace_back(state);
             std::push_heap(states.begin(), states.end());
+
         }
 
         ompl::base::State* sampleState() {
@@ -80,10 +81,8 @@ public:
         double g = std::numeric_limits<double>::infinity();
         double rhs = std::numeric_limits<double>::infinity();
 
-        unsigned int statesCount;
-
-    private:
         std::vector<StateWrapper> states;
+    private:
         unsigned int heapIndex;
     };
 
@@ -97,7 +96,8 @@ public:
                   alpha{alpha},
                   beta{beta},
                   totalEffort{std::numeric_limits<double>::infinity()},
-                  heapIndex{std::numeric_limits<unsigned int>::max()} {}
+                  heapIndex{std::numeric_limits<unsigned int>::max()},
+                  interior{false} {}
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
             return lhs->totalEffort < rhs->totalEffort;
@@ -203,6 +203,9 @@ public:
 
     void initialize() {
         initializeRegions(regionCount);
+		regions[goalRegionId]->rhs = 0;
+		regions[goalRegionId]->key = regions[goalRegionId]->calculateKey();
+		inconsistentRegions.push(regions[goalRegionId]);
         computeShortestPath();
         addOutgoingEdgesToOpen(startRegionId);
     }
@@ -227,15 +230,14 @@ public:
             } else {
                 targetEdge->beta++;
             }
+            updateRegion(targetEdge->sourceRegion);
         }
-
         computeShortestPath();
 
-        auto targetEdge = open.pop();
+        targetEdge = open.pop();
         targetSuccess = false;
         const RegionId sourceRegionId = targetEdge->sourceRegion;
         const RegionId targetRegionId = targetEdge->targetRegion;
-
         auto sourceRegionSample = regions[sourceRegionId]->sampleState();
         spaceInformation->copyState(from, sourceRegionSample);
 
@@ -302,7 +304,7 @@ private:
             Region* region = new Region(i, state);
             regions.push_back(region);
             nearestRegions->add(region);
-        }
+   		}
     }
 
     void connectRegions() {
@@ -335,14 +337,15 @@ private:
     }
 
     double getInteriorEdgeEffort(Edge* edge) {
-        const auto numberOfStates = regions[edge->targetRegion]->statesCount;
+        const auto numberOfStates = regions[edge->targetRegion]->states.size();
 
         double bestValue = std::numeric_limits<double>::infinity();
         std::vector<EdgeId> outEdgeIds = regions[edge->targetRegion]->outEdges;
 
         for (auto n : outEdgeIds) {
             Edge* e = edges[n];
-            double value = e->getBonusEffort(numberOfStates) + regions[n]->g;
+            double value = e->getBonusEffort(numberOfStates) +
+                    regions[e->targetRegion]->g;
 
             if (value < bestValue) {
                 bestValue = value;
@@ -461,7 +464,7 @@ public:
 
             for (auto n : outEdgeIds) {
                 Edge* e = edges[n];
-                double value = regions[n]->g + e->getEffort();
+                double value = regions[e->targetRegion]->g + e->getEffort();
                 if (value < minValue) {
                     minValue = value;
                 }
@@ -469,13 +472,13 @@ public:
             s->rhs = minValue;
         }
 
-        if (inconsistentRegions.inHeap(regions[region])) {
-            inconsistentRegions.remove(regions[region]);
+        if (inconsistentRegions.inHeap(s)){
+            inconsistentRegions.remove(s);
         }
 
         if (s->g != s->rhs) {
             s->key = s->calculateKey();
-            inconsistentRegions.push(regions[region]);
+            inconsistentRegions.push(s);
         }
     }
 
