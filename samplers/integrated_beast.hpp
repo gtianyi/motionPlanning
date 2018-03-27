@@ -179,7 +179,7 @@ public:
         }
 
         nearestRegions->setDistanceFunction(
-                [&globalParameters](const Region* lhs, const Region* rhs) {
+                [](const Region* lhs, const Region* rhs) {
                     return globalParameters.globalAbstractAppBaseGeometric
                             ->getStateSpace()
                             ->distance(lhs->state, rhs->state);
@@ -215,6 +215,8 @@ public:
 
         generateRegions(regionCount);
         connectRegions();
+
+        publishAbstractGraph(true);
     }
 
     void splitRegion() {}
@@ -259,6 +261,7 @@ public:
                     to, fullState.get(), stateRadius);
         }
 
+        publishAbstractGraph();
         return true;
     }
 
@@ -416,33 +419,51 @@ private:
     }
 
 public:
-    void publishAbstractGraph() {
+    void publishAbstractGraph(bool firstTime = false) {
         std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
         std::ostringstream commandBuilder;
 
+        const unsigned int dimension =
+                globalParameters.globalAbstractAppBaseGeometric
+                        ->getSpaceInformation()
+                        .get()
+                        ->getStateDimension();
+
         for (auto* region : regions) {
-            auto se3state =
+            auto vectorState =
                     region->state
                             ->as<ompl::base::CompoundStateSpace::StateType>()
-                            ->as<ompl::base::SE3StateSpace::StateType>(0);
+                            ->as<ompl::base::RealVectorStateSpace::StateType>(
+                                    0);
 
-            commandBuilder << "{\"an\":{\"" << region->id
-                           << "\":{\"label\":\"Streaming\",\"size\":2}}}"
-                           << std::endl;
+            commandBuilder << "{\"" << (firstTime ? "an" : "cn") << "\":{\""
+                           << region->id << "\":{"
+                           << "\"label\":\"Streaming\""
+                           << ",\"size\":2"
+                           << ",\"x\":" << vectorState->values[0] * 100
+                           << ",\"y\":" << vectorState->values[1] * 100
+                           << ",\"z\":"
+                           << (dimension == 3 ? vectorState->values[2] * 100 :
+                                                0)
+                           << "}}}\r\n";
         }
 
         for (auto* edge : edges) {
-            commandBuilder << "{\"ae\":{\"" << edge << "\":{"
+            commandBuilder << "{\"" << (firstTime ? "ae" : "ce") << "\":{\""
+                           << edge << "\":{"
                            << "\"source\":\"" << edge->sourceRegion << "\","
-                           << "\"target\":\"" << edge->targetRegion << "\"}}}"
-                           << std::endl;
+                           << "\"target\":\"" << edge->targetRegion << "\","
+                           << "\"directed\":true,"
+                           << "\"weight\":\"" << edge->alpha + edge->beta
+                           << "\"}}}\r\n";
         }
+        commandBuilder << std::endl;
 
         std::string commandString = commandBuilder.str();
 
-        std::cout << commandString << std::endl;
+        //        std::cout << commandString << std::endl;
         auto res = cli.post("/workspace1?operation=updateGraph",
                 commandString,
                 "plain/text");
