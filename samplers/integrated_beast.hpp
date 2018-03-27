@@ -91,8 +91,8 @@ public:
                 const RegionId targetRegion,
                 unsigned int alpha,
                 unsigned int beta)
-                : sourceRegion{sourceRegion},
-                  targetRegion{targetRegion},
+                : sourceRegionId{sourceRegion},
+                  targetRegionId{targetRegion},
                   alpha{alpha},
                   beta{beta},
                   totalEffort{std::numeric_limits<double>::infinity()},
@@ -111,13 +111,6 @@ public:
             edge->heapIndex = heapIndex;
         }
 
-        const RegionId sourceRegion;
-        const RegionId targetRegion;
-        unsigned int alpha;
-        unsigned int beta;
-        double totalEffort;
-        bool interior;
-        unsigned int heapIndex;
         double getEffort() const {
             if (alpha <= 0) {
                 throw ompl::Exception("IntegratedBeast::Edge::getEffort",
@@ -139,6 +132,18 @@ public:
 
             return estimate;
         }
+
+        const RegionId sourceRegionId;
+        const RegionId targetRegionId;
+
+        unsigned int alpha;
+        unsigned int beta;
+
+        double totalEffort;
+
+        bool interior;
+
+        unsigned int heapIndex;
     };
 
     IntegratedBeast(const ompl::base::SpaceInformation* spaceInformation,
@@ -222,9 +227,9 @@ public:
 
         connectRegions();
 
-//        ensureStartGoalConnectivity();
+        //        ensureStartGoalConnectivity();
 
-//        publishAbstractGraph(true);
+        //        publishAbstractGraph(true);
     }
 
     void ensureStartGoalConnectivity() {
@@ -251,7 +256,7 @@ public:
             auto currentRegion = regions[currentRegionId];
 
             for (auto edgeId : currentRegion->outEdges) {
-                const RegionId neighborRegionId = edges[edgeId]->targetRegion;
+                const RegionId neighborRegionId = edges[edgeId]->targetRegionId;
 
                 if (closed.find(neighborRegionId) != closed.end())
                     continue;
@@ -276,24 +281,35 @@ public:
     void splitRegion() {}
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
-        if (targetEdge != nullptr) {
+        if (lastSelectedEdge != nullptr) {
             if (targetSuccess) {
-                targetEdge->alpha++;
-                targetEdge->interior = true;
+                if (!addedGoalEdge &&
+                        lastSelectedEdge->targetRegionId == goalRegionId) {
+                    addGoalEdge();
+                }
+
+                lastSelectedEdge->alpha++;
+                lastSelectedEdge->interior = true;
             } else {
-                targetEdge->beta++;
+                lastSelectedEdge->beta++;
             }
 
-            updateRegion(targetEdge->sourceRegion);
+            updateRegion(lastSelectedEdge->sourceRegionId);
+            computeShortestPath();
+
+            if (targetSuccess) {
+                addOutgoingEdgesToOpen(lastSelectedEdge->targetRegionId);
+            }
         }
 
-        computeShortestPath();
-
-        targetEdge = open.pop();
+        lastSelectedEdge = open.pop();
         targetSuccess = false;
-        const RegionId sourceRegionId = targetEdge->sourceRegion;
-        const RegionId targetRegionId = targetEdge->targetRegion;
+
+        const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
+        const RegionId targetRegionId = lastSelectedEdge->targetRegionId;
+
         auto sourceRegionSample = regions[sourceRegionId]->sampleState();
+
         spaceInformation->copyState(from, sourceRegionSample);
 
         if (sourceRegionId == targetRegionId &&
@@ -316,8 +332,21 @@ public:
                     to, fullState.get(), stateRadius);
         }
 
-//        publishAbstractGraph();
+        //        publishAbstractGraph();
         return true;
+    }
+
+    void addGoalEdge() {
+        // We might want to tune the initial goal edge beta distribution.
+        // to bias towards the goal edge
+        auto goalEdge = new Edge(goalRegionId, goalRegionId, 2, 1);
+        edges.push_back(goalEdge);
+
+        goalEdge->totalEffort = 1;
+
+        open.push(goalEdge);
+        // TODO add to inconsistentRegions
+        addedGoalEdge = true;
     }
 
     void reached(ompl::base::State* state) {
@@ -328,7 +357,8 @@ public:
 
         regions[regionId]->addState(state);
 
-        if (targetEdge != nullptr && regionId == targetEdge->targetRegion) {
+        if (lastSelectedEdge != nullptr &&
+                regionId == lastSelectedEdge->targetRegionId) {
             targetSuccess = true;
         } else {
             addOutgoingEdgesToOpen(regionId);
@@ -361,7 +391,7 @@ private:
         auto startRegion = new Region(startRegionId, startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
-        
+
         // Add startState to startRegion as a seed for the motion tree
         startRegion->addState(startState);
 
@@ -382,6 +412,7 @@ private:
             addKNeighbors(region, neighborEdgeCount);
         }
     }
+
     void clearAllEdges() const {
         for (auto edge : edges) {
             delete edge;
@@ -412,15 +443,17 @@ private:
     }
 
     double getInteriorEdgeEffort(Edge* edge) {
-        const auto numberOfStates = regions[edge->targetRegion]->states.size();
+        const auto numberOfStates =
+                regions[edge->targetRegionId]->states.size();
 
         double bestValue = std::numeric_limits<double>::infinity();
-        std::vector<EdgeId> outEdgeIds = regions[edge->targetRegion]->outEdges;
+        std::vector<EdgeId> outEdgeIds =
+                regions[edge->targetRegionId]->outEdges;
 
         for (auto n : outEdgeIds) {
             Edge* e = edges[n];
             double value = e->getBonusEffort(numberOfStates) +
-                    regions[e->targetRegion]->g;
+                    regions[e->targetRegionId]->g;
 
             if (value < bestValue) {
                 bestValue = value;
@@ -468,7 +501,7 @@ private:
                 }
 
                 for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->targetRegion);
+                    updateRegion(edges[outEdgeId]->targetRegionId);
                 }
             } else {
                 u->g = std::numeric_limits<double>::infinity();
@@ -487,7 +520,7 @@ private:
                 updateRegion(u->id);
 
                 for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->targetRegion);
+                    updateRegion(edges[outEdgeId]->targetRegionId);
                 }
             }
         }
@@ -528,8 +561,8 @@ public:
         for (auto* edge : edges) {
             commandBuilder << "{\"" << (firstTime ? "ae" : "ce") << "\":{\""
                            << edge << "\":{"
-                           << "\"source\":\"" << edge->sourceRegion << "\","
-                           << "\"target\":\"" << edge->targetRegion << "\","
+                           << "\"source\":\"" << edge->sourceRegionId << "\","
+                           << "\"target\":\"" << edge->targetRegionId << "\","
                            << "\"directed\":true,"
                            << "\"weight\":\"" << edge->alpha + edge->beta
                            << "\"}}}\r\n";
@@ -557,7 +590,7 @@ public:
 
             for (auto n : outEdgeIds) {
                 Edge* e = edges[n];
-                double value = regions[e->targetRegion]->g + e->getEffort();
+                double value = regions[e->targetRegionId]->g + e->getEffort();
                 if (value < minValue) {
                     minValue = value;
                 }
@@ -599,6 +632,7 @@ public:
     std::vector<Region*> regions;
     std::vector<Edge*> edges;
     std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
+
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
     const ompl::base::StateSpacePtr abstractSpace;
@@ -607,6 +641,7 @@ public:
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
-    Edge* targetEdge = nullptr;
+    Edge* lastSelectedEdge = nullptr;
     bool targetSuccess = false;
+    bool addedGoalEdge = false;
 };
