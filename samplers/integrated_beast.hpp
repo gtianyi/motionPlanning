@@ -224,7 +224,7 @@ public:
 
         ensureStartGoalConnectivity();
 
-        publishAbstractGraph(true);
+//        publishAbstractGraph(true);
     }
 
     void ensureStartGoalConnectivity() {
@@ -316,7 +316,7 @@ public:
                     to, fullState.get(), stateRadius);
         }
 
-        publishAbstractGraph();
+//        publishAbstractGraph();
         return true;
     }
 
