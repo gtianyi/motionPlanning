@@ -153,6 +153,9 @@ public:
                       params.integerVal("RegionCount"))},
               neighborEdgeCount{static_cast<const unsigned int>(
                       params.integerVal("NumEdges"))},
+              resizeFactor{params.exists("PRMResizeFactor") ?
+                              params.doubleVal("PRMResizeFactor") :
+                              2},
               initialAlpha{static_cast<const unsigned int>(
                       params.integerVal("InitialAlpha"))},
               initialBeta{static_cast<const unsigned int>(
@@ -580,6 +583,7 @@ public:
 
     const double stateRadius{};
     const unsigned int regionCount{};
+	const double resizeFactor{};
     const unsigned int neighborEdgeCount{};
     const unsigned int initialAlpha{};
     const unsigned int initialBeta{};

@@ -48,3 +48,6 @@
 
 #instance input
 *.inst
+
+#Editor config
+.ycm_extra_config.py
