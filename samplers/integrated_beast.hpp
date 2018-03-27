@@ -149,13 +149,11 @@ public:
             : startRegionId{0},
               goalRegionId{1},
               stateRadius{params.doubleVal("StateRadius")},
-              regionCount{static_cast<const unsigned int>(
+              initialRegionCount{static_cast<const unsigned int>(
                       params.integerVal("RegionCount"))},
               neighborEdgeCount{static_cast<const unsigned int>(
                       params.integerVal("NumEdges"))},
-              resizeFactor{params.exists("PRMResizeFactor") ?
-                              params.doubleVal("PRMResizeFactor") :
-                              2},
+              resizeFactor{params.doubleVal("PRMResizeFactor")},
               initialAlpha{static_cast<const unsigned int>(
                       params.integerVal("InitialAlpha"))},
               initialBeta{static_cast<const unsigned int>(
@@ -203,7 +201,7 @@ public:
     }
 
     void initialize() {
-        initializeRegions(regionCount);
+        initializeRegions(initialRegionCount);
 
         regions[goalRegionId]->rhs = 0;
         regions[goalRegionId]->key = regions[goalRegionId]->calculateKey();
@@ -219,12 +217,11 @@ public:
                     "Region count must be at least 3");
         }
 
-        regions.reserve(regionCount);
         generateStartGoalRegions();
         generateRegions(regionCount);
 
         connectRegions();
-        
+
         ensureStartGoalConnectivity();
 
         publishAbstractGraph(true);
@@ -270,8 +267,8 @@ public:
     }
 
     void growAbstraction() {
-        auto newRegionCount = regionCount * 2; // TODO get from params
-        generateRegions(newRegionCount);
+        auto newRegionCount = regions.size() * resizeFactor;
+        generateRegions(static_cast<const size_t>(newRegionCount));
         clearAllEdges();
         connectRegions();
     }
@@ -339,10 +336,17 @@ public:
     }
 
 private:
-    virtual void generateRegions(const size_t regionCount) {
-        auto size = static_cast<unsigned int>(regions.size());
+    virtual void generateRegions(const size_t newRegionCount) {
+        auto currentRegionCount = static_cast<unsigned int>(regions.size());
 
-        for (unsigned int i = size; i < regionCount; ++i) {
+        if (newRegionCount <= currentRegionCount) {
+            throw ompl::Exception("IntegratedBeast::generateRegions",
+                    "Can't generate less regions than the current count");
+        }
+
+        regions.reserve(newRegionCount);
+
+        for (unsigned int i = currentRegionCount; i < newRegionCount; ++i) {
             auto state = abstractSpace->allocState();
             abstractSampler->sample(state);
             auto region = new Region(i, state);
@@ -369,7 +373,7 @@ private:
 
     void connectRegions() {
         edges.clear();
-        
+
         for (auto& region : regions) {
             region->outEdges.clear();
             region->inEdges.clear();
@@ -378,7 +382,7 @@ private:
     }
     void clearAllEdges() const {
         for (auto edge : edges) {
-           delete edge; 
+            delete edge;
         }
     }
 
@@ -582,8 +586,8 @@ public:
     const RegionId goalRegionId;
 
     const double stateRadius{};
-    const unsigned int regionCount{};
-	const double resizeFactor{};
+    const unsigned int initialRegionCount{};
+    const double resizeFactor{};
     const unsigned int neighborEdgeCount{};
     const unsigned int initialAlpha{};
     const unsigned int initialBeta{};
