@@ -222,7 +222,7 @@ public:
 
         connectRegions();
 
-        ensureStartGoalConnectivity();
+//        ensureStartGoalConnectivity();
 
 //        publishAbstractGraph(true);
     }
@@ -359,9 +359,11 @@ private:
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, start);
         auto startRegion = new Region(startRegionId, startState);
-        startRegion->addState(startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
+        
+        // Add startState to startRegion as a seed for the motion tree
+        startRegion->addState(startState);
 
         // Add goal
         auto goalState = abstractSpace->allocState();
@@ -585,23 +587,23 @@ public:
     const RegionId startRegionId;
     const RegionId goalRegionId;
 
-    const double stateRadius{};
-    const unsigned int initialRegionCount{};
-    const double resizeFactor{};
-    const unsigned int neighborEdgeCount{};
-    const unsigned int initialAlpha{};
-    const unsigned int initialBeta{};
+    const double stateRadius;
+    const unsigned int initialRegionCount;
+    const double resizeFactor;
+    const unsigned int neighborEdgeCount;
+    const unsigned int initialAlpha;
+    const unsigned int initialBeta;
 
     const ompl::base::State* start;
-    const ompl::base::State* goal{};
-    std::vector<Region*> regions{};
-    std::vector<Edge*> edges{};
-    std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions{};
+    const ompl::base::State* goal;
+    std::vector<Region*> regions;
+    std::vector<Edge*> edges;
+    std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
     const ompl::base::SpaceInformation* spaceInformation;
     const ompl::base::StateSamplerPtr fullStateSampler;
     const ompl::base::StateSpacePtr abstractSpace;
     const ompl::base::ValidStateSamplerPtr abstractSampler;
-    const ompl::base::GoalSampleableRegion* goalRegionSampler{};
+    const ompl::base::GoalSampleableRegion* goalRegionSampler;
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
