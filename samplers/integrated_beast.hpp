@@ -54,7 +54,6 @@ public:
         void addState(ompl::base::State* state) {
             states.emplace_back(state);
             std::push_heap(states.begin(), states.end());
-
         }
 
         ompl::base::State* sampleState() {
@@ -82,6 +81,7 @@ public:
         double rhs = std::numeric_limits<double>::infinity();
 
         std::vector<StateWrapper> states;
+
     private:
         unsigned int heapIndex;
     };
@@ -196,16 +196,16 @@ public:
             delete region;
         }
 
-        for (auto edge : edges) {
-            delete edge;
-        }
+        clearAllEdges();
     }
 
     void initialize() {
         initializeRegions(regionCount);
-		regions[goalRegionId]->rhs = 0;
-		regions[goalRegionId]->key = regions[goalRegionId]->calculateKey();
-		inconsistentRegions.push(regions[goalRegionId]);
+
+        regions[goalRegionId]->rhs = 0;
+        regions[goalRegionId]->key = regions[goalRegionId]->calculateKey();
+        inconsistentRegions.push(regions[goalRegionId]);
+
         computeShortestPath();
         addOutgoingEdgesToOpen(startRegionId);
     }
@@ -216,10 +216,61 @@ public:
                     "Region count must be at least 3");
         }
 
+        regions.reserve(regionCount);
+        generateStartGoalRegions();
         generateRegions(regionCount);
+
         connectRegions();
+        
+        ensureStartGoalConnectivity();
 
         publishAbstractGraph(true);
+    }
+
+    void ensureStartGoalConnectivity() {
+        while (!isStartGoalConnected()) {
+            growAbstraction();
+        }
+    }
+
+    bool isStartGoalConnected() {
+        Timer("connectivity check");
+
+        RegionId index = 0;
+        std::vector<RegionId> open;
+        std::unordered_set<RegionId> closed;
+
+        open.emplace_back(startRegionId);
+        while (index < open.size()) {
+            RegionId currentRegionId = open[index];
+
+            if (currentRegionId == goalRegionId) {
+                return true;
+            }
+
+            auto currentRegion = regions[currentRegionId];
+
+            for (auto edgeId : currentRegion->outEdges) {
+                const RegionId neighborRegionId = edges[edgeId]->targetRegion;
+
+                if (closed.find(neighborRegionId) != closed.end())
+                    continue;
+
+                closed.insert(neighborRegionId);
+                open.emplace_back(neighborRegionId);
+            }
+
+            index++;
+        }
+
+        return false;
+    }
+
+    void growAbstraction() {
+        auto newRegionCount = regionCount * 2; // TODO get from params
+        generateRegions(newRegionCount);
+        clearAllEdges();
+        connectRegions();
     }
 
     void splitRegion() {}
@@ -232,8 +283,10 @@ public:
             } else {
                 targetEdge->beta++;
             }
+
             updateRegion(targetEdge->sourceRegion);
         }
+
         computeShortestPath();
 
         targetEdge = open.pop();
@@ -284,12 +337,21 @@ public:
 
 private:
     virtual void generateRegions(const size_t regionCount) {
-        regions.reserve(regionCount);
+        auto size = static_cast<unsigned int>(regions.size());
 
+        for (unsigned int i = size; i < regionCount; ++i) {
+            auto state = abstractSpace->allocState();
+            abstractSampler->sample(state);
+            auto region = new Region(i, state);
+            regions.push_back(region);
+            nearestRegions->add(region);
+        }
+    }
+    void generateStartGoalRegions() {
         // Add start
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, start);
-        Region* startRegion = new Region(startRegionId, startState);
+        auto startRegion = new Region(startRegionId, startState);
         startRegion->addState(startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
@@ -297,22 +359,23 @@ private:
         // Add goal
         auto goalState = abstractSpace->allocState();
         abstractSpace->copyState(goalState, goal);
-        Region* goalRegion = new Region(goalRegionId, startState);
+        auto goalRegion = new Region(goalRegionId, startState);
         regions.push_back(goalRegion);
         nearestRegions->add(goalRegion);
-
-        for (unsigned int i = 2; i < regionCount; ++i) {
-            auto state = abstractSpace->allocState();
-            abstractSampler->sample(state);
-            Region* region = new Region(i, state);
-            regions.push_back(region);
-            nearestRegions->add(region);
-   		}
     }
 
     void connectRegions() {
+        edges.clear();
+        
         for (auto& region : regions) {
+            region->outEdges.clear();
+            region->inEdges.clear();
             addKNeighbors(region, neighborEdgeCount);
+        }
+    }
+    void clearAllEdges() const {
+        for (auto edge : edges) {
+           delete edge; 
         }
     }
 
@@ -493,7 +556,7 @@ public:
             s->rhs = minValue;
         }
 
-        if (inconsistentRegions.inHeap(s)){
+        if (inconsistentRegions.inHeap(s)) {
             inconsistentRegions.remove(s);
         }
 
