@@ -297,10 +297,18 @@ public:
                 }
 
                 lastSelectedEdge->alpha++;
-                lastSelectedEdge->interior = true;
+                if (isGoalEdge(lastSelectedEdge)) {
+                    lastSelectedEdge->interior = true;
+				}
             } else {
                 lastSelectedEdge->beta++;
             }
+
+            lastSelectedEdge->totalEffort = lastSelectedEdge->interior ?
+                    getInteriorEdgeEffort(lastSelectedEdge) :
+                    regions[lastSelectedEdge->targetRegionId]->g +
+                            lastSelectedEdge->getEffort();
+            insertOrUpdateOpen(lastSelectedEdge);
 
             updateRegion(lastSelectedEdge->sourceRegionId);
             computeShortestPath();
@@ -312,6 +320,10 @@ public:
 
         lastSelectedEdge = open.pop();
         targetSuccess = false;
+
+        std::cout << "top effort" << lastSelectedEdge->totalEffort << std::endl;
+        std::cout << "top target id" << lastSelectedEdge->targetRegionId
+                  << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
         const RegionId targetRegionId = lastSelectedEdge->targetRegionId;
@@ -344,6 +356,12 @@ public:
         return true;
     }
 
+	bool isGoalEdge(Edge* edge){
+            const RegionId sourceRegionId = edge->sourceRegionId;
+            const RegionId targetRegionId = edge->targetRegionId;
+            return sourceRegionId == targetRegionId &&
+                    sourceRegionId == goalRegionId;
+	}
     void addGoalEdge() {
         // We might want to tune the initial goal edge beta distribution.
         // to bias towards the goal edge
@@ -509,7 +527,7 @@ private:
                 }
 
                 for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->targetRegionId);
+                    updateRegion(edges[outEdgeId]->getInEdgeTargetRegionId());
                 }
             } else {
                 u->g = std::numeric_limits<double>::infinity();
@@ -528,7 +546,7 @@ private:
                 updateRegion(u->id);
 
                 for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->targetRegionId);
+                    updateRegion(edges[outEdgeId]->getInEdgeTargetRegionId());
                 }
             }
         }
