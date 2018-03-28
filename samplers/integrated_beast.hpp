@@ -82,6 +82,10 @@ public:
 
         std::vector<StateWrapper> states;
 
+#ifdef STREAM_GRAPH
+        bool alreadyVisualized = false;
+#endif
+
     private:
         unsigned int heapIndex;
     };
@@ -134,14 +138,10 @@ public:
 
             return estimate;
         }
-        
-        RegionId getInEdgeTargetRegionId() const {
-            return sourceRegionId;
-        }
-        
-        RegionId getInEdgeSourceRegionId() const {
-            return targetRegionId;
-        }
+
+        RegionId getInEdgeTargetRegionId() const { return sourceRegionId; }
+
+        RegionId getInEdgeSourceRegionId() const { return targetRegionId; }
 
         const RegionId sourceRegionId;
         const RegionId targetRegionId;
@@ -154,6 +154,10 @@ public:
         bool interior;
 
         unsigned int heapIndex;
+
+#ifdef STREAM_GRAPH
+        bool alreadyVisualized = false;
+#endif
     };
 
     IntegratedBeast(const ompl::base::SpaceInformation* spaceInformation,
@@ -237,9 +241,11 @@ public:
 
         connectRegions();
 
-        //        ensureStartGoalConnectivity();
+//        ensureStartGoalConnectivity();
 
-        //        publishAbstractGraph(true);
+#ifdef STREAM_GRAPH
+        publishAbstractGraph();
+#endif
     }
 
     void ensureStartGoalConnectivity() {
@@ -359,7 +365,9 @@ public:
                     to, fullState.get(), stateRadius);
         }
 
-        //        publishAbstractGraph();
+#ifdef STREAM_GRAPH
+        publishAbstractGraph();
+#endif
         return true;
     }
 
@@ -571,7 +579,7 @@ private:
     }
 
 public:
-    void publishAbstractGraph(bool firstTime = false) {
+    void publishAbstractGraph() {
         std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
@@ -590,8 +598,8 @@ public:
                             ->as<ompl::base::RealVectorStateSpace::StateType>(
                                     0);
 
-            commandBuilder << "{\"" << (firstTime ? "an" : "cn") << "\":{\""
-                           << region->id << "\":{"
+            commandBuilder << "{\"" << (region->alreadyVisualized ? "cn" : "an")
+                           << "\":{\"" << region->id << "\":{"
                            << "\"label\":\"Streaming\""
                            << ",\"size\":2"
                            << ",\"x\":" << vectorState->values[0] * 100
@@ -603,8 +611,8 @@ public:
         }
 
         for (auto* edge : edges) {
-            commandBuilder << "{\"" << (firstTime ? "ae" : "ce") << "\":{\""
-                           << edge << "\":{"
+            commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
+                           << "\":{\"" << edge << "\":{"
                            << "\"source\":\"" << edge->sourceRegionId << "\","
                            << "\"target\":\"" << edge->targetRegionId << "\","
                            << "\"directed\":true,"
