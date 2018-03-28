@@ -116,7 +116,7 @@ public:
                 throw ompl::Exception("IntegratedBeast::Edge::getEffort",
                         "Alpha value must be greater than 0");
             }
-            return (alpha + beta) / alpha;
+            return (double)(alpha + beta) / (double)alpha;
         }
 
         double getBonusEffort(unsigned int numberOfStates) const {
@@ -125,8 +125,10 @@ public:
                         "Alpha value must be greater than 0");
             }
 
-            double probability = (alpha / (alpha + beta)) *
-                            ((numberOfStates - 1) / numberOfStates) +
+            double probability =
+                    ((double)alpha / ((double)alpha + (double)beta)) *
+                            ((double)(numberOfStates - 1) /
+                                    (double)numberOfStates) +
                     (1. / numberOfStates);
             double estimate = 1. / probability;
 
@@ -297,9 +299,9 @@ public:
                 }
 
                 lastSelectedEdge->alpha++;
-                if (isGoalEdge(lastSelectedEdge)) {
-                    lastSelectedEdge->interior = true;
-				}
+                //if (isGoalEdge(lastSelectedEdge)) {
+                //    lastSelectedEdge->interior = true;
+				//}
             } else {
                 lastSelectedEdge->beta++;
             }
@@ -321,9 +323,14 @@ public:
         lastSelectedEdge = open.pop();
         targetSuccess = false;
 
-        std::cout << "top effort" << lastSelectedEdge->totalEffort << std::endl;
-        std::cout << "top target id" << lastSelectedEdge->targetRegionId
+        std::cout << "top total effort " << lastSelectedEdge->totalEffort
                   << std::endl;
+        std::cout << "top edge: " << lastSelectedEdge->sourceRegionId << ","
+                  << lastSelectedEdge->targetRegionId << std::endl;
+        std::cout << "top target g "
+                  << regions[lastSelectedEdge->targetRegionId]->g << std::endl;
+        std::cout << "top a b " << lastSelectedEdge->alpha <<" "
+                  << lastSelectedEdge->beta << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
         const RegionId targetRegionId = lastSelectedEdge->targetRegionId;
@@ -491,14 +498,20 @@ private:
 
     void addOutgoingEdgesToOpen(RegionId region) {
         for (auto edgeId : regions[region]->outEdges) {
-            if (!open.inHeap(edges[edgeId])) {
-                open.push(edges[edgeId]);
+            Edge* edge = edges[edgeId];
+			Region* targetRegion=regions[edge->targetRegionId];
+			if (std::isinf(targetRegion->g)) {
+					computeShortestPath();
+			}
+			edge->totalEffort=targetRegion->g+edge->getEffort();
+            if (!open.inHeap(edge)) {
+                open.push(edge);
             }
         }
     }
 
-    void insertOrUpdateOpen(Edge* edge) {
-        if (!open.inHeap(edge)) {
+    void insertOrUpdateOpen(Edge* edge, bool addToOpen = true) {
+        if (!open.inHeap(edge) && addToOpen) {
             open.push(edge);
         } else {
             open.siftFromItem(edge);
@@ -506,6 +519,9 @@ private:
     }
 
     void computeShortestPath() {
+        //if (inconsistentRegions.isEmpty()) {
+        //    std::cout << "nothing in u" << std::endl;
+        //}
         while (!inconsistentRegions.isEmpty()) {
             Region* u = regions[inconsistentRegions.pop()->id];
             auto oldKey = u->key;
@@ -516,40 +532,42 @@ private:
                 inconsistentRegions.push(u);
             } else if (u->g > u->rhs) {
                 u->g = u->rhs;
+
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
-
+				    //this is wrong, the bonus should be effected on successor
+					//edge. So we have to take out a value from g and plug in
+					//the bonused effort
+                    int numberOfState = u->states.size();
                     double totalEffort = edge->interior ?
-                            getInteriorEdgeEffort(edge) :
+                            u->g + edge->getBonusEffort(numberOfState) :
                             u->g + edge->getEffort();
 
                     edge->totalEffort = totalEffort;
-                }
-
-                for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->getInEdgeTargetRegionId());
+                    insertOrUpdateOpen(edge, false);
+                    updateRegion(edge->getInEdgeTargetRegionId());
                 }
             } else {
                 u->g = std::numeric_limits<double>::infinity();
-
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
 
-                    const double totalEffort = edge->interior ?
-                            getInteriorEdgeEffort(edge) :
+                    int numberOfState = u->states.size();
+					//in the paper, the g here is the old g
+                    double totalEffort = edge->interior ?
+                            u->g + edge->getBonusEffort(numberOfState) :
                             u->g + edge->getEffort();
 
                     edge->totalEffort = totalEffort;
+                    insertOrUpdateOpen(edge, false);
+                    updateRegion(edge->getInEdgeTargetRegionId());
                 }
 
                 // Update this region
                 updateRegion(u->id);
-
-                for (auto outEdgeId : u->outEdges) {
-                    updateRegion(edges[outEdgeId]->getInEdgeTargetRegionId());
-                }
             }
         }
+
     }
 
 public:
