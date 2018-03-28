@@ -132,6 +132,14 @@ public:
 
             return estimate;
         }
+        
+        RegionId getInEdgeTargetRegionId() const {
+            return sourceRegionId;
+        }
+        
+        RegionId getInEdgeSourceRegionId() const {
+            return targetRegionId;
+        }
 
         const RegionId sourceRegionId;
         const RegionId targetRegionId;
