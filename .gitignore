@@ -3,7 +3,10 @@
 /cmake-build-debug
 /build_debug
 /experiments
+/scripts
+/inst
 ### C++ template
+
 # Prerequisites
 *.d
 
