@@ -445,7 +445,7 @@ private:
         // Add goal
         auto goalState = abstractSpace->allocState();
         abstractSpace->copyState(goalState, goal);
-        auto goalRegion = new Region(goalRegionId, startState);
+        auto goalRegion = new Region(goalRegionId, goalState);
         regions.push_back(goalRegion);
         nearestRegions->add(goalRegion);
     }
@@ -588,6 +588,7 @@ private:
     }
 
 public:
+#ifdef STREAM_GRAPH
     void publishAbstractGraph() {
         static int counter = -1;
         ++counter;
@@ -596,7 +597,6 @@ public:
             return;
         }
 
-#ifdef STREAM_GRAPH
         std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
@@ -617,8 +617,8 @@ public:
 
             commandBuilder << "{\"" << (region->alreadyVisualized ? "cn" : "an")
                            << "\":{\"" << region->id << "\":{"
-                           << "\"label\":\"Streaming\""
-                           << ",\"size\":2"
+//                         << "\"label\":\"Streaming\""
+                           << "\"size\":2"
                            << ",\"x\":" << vectorState->values[0] * 100
                            << ",\"y\":" << vectorState->values[1] * 100
                            << ",\"z\":"
@@ -651,8 +651,8 @@ public:
         std::cout << res->status << std::endl;
         std::cout << res->body << std::endl;
         std::cout << "Graph test end" << std::endl;
-#endif
     }
+#endif
 
     void updateRegion(const unsigned int region) {
         Region* s = regions[region];
