@@ -183,8 +183,17 @@ public:
                       params.integerVal("InitialAlpha"))},
               initialBeta{static_cast<const unsigned int>(
                       params.integerVal("InitialBeta"))},
-              start{start},
-              goal{goalPtr.get()->as<ompl::base::GoalState>()->getState()},
+              fullStartState{nullptr},
+              fullGoalState{nullptr},
+              abstractStartState{
+                      globalParameters.globalAbstractAppBaseGeometric
+                              ->getProblemDefinition()
+                              ->getStartState(0)},
+              abstractGoalState{globalParameters.globalAbstractAppBaseGeometric
+                                        ->getProblemDefinition()
+                                        ->getGoal()
+                                        ->as<ompl::base::GoalState>()
+                                        ->getState()},
               regions{},
               edges{},
               nearestRegions{},
@@ -210,6 +219,13 @@ public:
                             ->getStateSpace()
                             ->distance(lhs->state, rhs->state);
                 });
+
+        fullStartState = spaceInformation->allocState();
+        spaceInformation->copyState(fullStartState, start);
+
+        fullGoalState = spaceInformation->allocState();
+        spaceInformation->copyState(fullGoalState,
+                goalPtr.get()->as<ompl::base::GoalState>()->getState());
     }
 
     IntegratedBeast(const IntegratedBeast&) = delete;
@@ -434,17 +450,17 @@ private:
     void generateStartGoalRegions() {
         // Add start
         auto startState = abstractSpace->allocState();
-        abstractSpace->copyState(startState, start);
+        abstractSpace->copyState(startState, abstractStartState);
         auto startRegion = new Region(startRegionId, startState);
         regions.push_back(startRegion);
         nearestRegions->add(startRegion);
 
         // Add startState to startRegion as a seed for the motion tree
-        startRegion->addState(startState);
+        startRegion->addState(fullStartState);
 
         // Add goal
         auto goalState = abstractSpace->allocState();
-        abstractSpace->copyState(goalState, goal);
+        abstractSpace->copyState(goalState, abstractGoalState);
         auto goalRegion = new Region(goalRegionId, goalState);
         regions.push_back(goalRegion);
         nearestRegions->add(goalRegion);
@@ -615,16 +631,15 @@ public:
                             ->as<ompl::base::RealVectorStateSpace::StateType>(
                                     0);
 
-            commandBuilder << "{\"" << (region->alreadyVisualized ? "cn" : "an")
-                           << "\":{\"" << region->id << "\":{"
-//                         << "\"label\":\"Streaming\""
-                           << "\"size\":2"
-                           << ",\"x\":" << vectorState->values[0] * 100
-                           << ",\"y\":" << vectorState->values[1] * 100
-                           << ",\"z\":"
-                           << (dimension == 3 ? vectorState->values[2] * 100 :
-                                                0)
-                           << "}}}\r\n";
+            commandBuilder
+                    << "{\"" << (region->alreadyVisualized ? "cn" : "an")
+                    << "\":{\"" << region->id << "\":{"
+                    //                         << "\"label\":\"Streaming\""
+                    << "\"size\":2"
+                    << ",\"x\":" << vectorState->values[0] * 100
+                    << ",\"y\":" << vectorState->values[1] * 100 << ",\"z\":"
+                    << (dimension == 3 ? vectorState->values[2] * 100 : 0)
+                    << "}}}\r\n";
             region->alreadyVisualized = true;
         }
 
@@ -700,8 +715,10 @@ public:
     const unsigned int initialAlpha;
     const unsigned int initialBeta;
 
-    const ompl::base::State* start;
-    const ompl::base::State* goal;
+    ompl::base::State* fullStartState;
+    ompl::base::State* fullGoalState;
+    const ompl::base::State* abstractStartState;
+    const ompl::base::State* abstractGoalState;
     std::vector<Region*> regions;
     std::vector<Edge*> edges;
     std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
