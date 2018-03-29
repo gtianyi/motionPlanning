@@ -28,6 +28,9 @@ public:
         Region(unsigned int id, ompl::base::State* state)
                 : id{id}, state{state}, outEdges{}, inEdges{} {}
 
+        Region(const Region&) = delete;
+        Region(Region&&) = delete;
+
         static bool pred(const Region* lhs, const Region* rhs) {
             const double lhsPrimary = std::min(lhs->g, lhs->rhs);
             const double lhsSecondary = std::min(lhs->g, lhs->rhs);
@@ -102,6 +105,9 @@ public:
                   totalEffort{std::numeric_limits<double>::infinity()},
                   heapIndex{std::numeric_limits<unsigned int>::max()},
                   interior{false} {}
+
+        Edge(const Edge&) = delete;
+        Edge(Edge&&) = delete;
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
             return lhs->totalEffort < rhs->totalEffort;
@@ -305,9 +311,9 @@ public:
                 }
 
                 lastSelectedEdge->alpha++;
-                //if (isGoalEdge(lastSelectedEdge)) {
+                // if (isGoalEdge(lastSelectedEdge)) {
                 //    lastSelectedEdge->interior = true;
-				//}
+                //}
             } else {
                 lastSelectedEdge->beta++;
             }
@@ -335,7 +341,7 @@ public:
                   << lastSelectedEdge->targetRegionId << std::endl;
         std::cout << "top target g "
                   << regions[lastSelectedEdge->targetRegionId]->g << std::endl;
-        std::cout << "top a b " << lastSelectedEdge->alpha <<" "
+        std::cout << "top a b " << lastSelectedEdge->alpha << " "
                   << lastSelectedEdge->beta << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
@@ -371,12 +377,12 @@ public:
         return true;
     }
 
-	bool isGoalEdge(Edge* edge){
-            const RegionId sourceRegionId = edge->sourceRegionId;
-            const RegionId targetRegionId = edge->targetRegionId;
-            return sourceRegionId == targetRegionId &&
-                    sourceRegionId == goalRegionId;
-	}
+    bool isGoalEdge(Edge* edge) {
+        const RegionId sourceRegionId = edge->sourceRegionId;
+        const RegionId targetRegionId = edge->targetRegionId;
+        return sourceRegionId == targetRegionId &&
+                sourceRegionId == goalRegionId;
+    }
     void addGoalEdge() {
         // We might want to tune the initial goal edge beta distribution.
         // to bias towards the goal edge
@@ -507,11 +513,15 @@ private:
     void addOutgoingEdgesToOpen(RegionId region) {
         for (auto edgeId : regions[region]->outEdges) {
             Edge* edge = edges[edgeId];
-			Region* targetRegion=regions[edge->targetRegionId];
-			if (std::isinf(targetRegion->g)) {
-					computeShortestPath();
-			}
-			edge->totalEffort=targetRegion->g+edge->getEffort();
+            Region* targetRegion = regions[edge->targetRegionId];
+
+            //
+            if (std::isinf(targetRegion->g)) {
+                computeShortestPath();
+            }
+
+            edge->totalEffort = targetRegion->g + edge->getEffort();
+
             if (!open.inHeap(edge)) {
                 open.push(edge);
             }
@@ -527,7 +537,7 @@ private:
     }
 
     void computeShortestPath() {
-        //if (inconsistentRegions.isEmpty()) {
+        // if (inconsistentRegions.isEmpty()) {
         //    std::cout << "nothing in u" << std::endl;
         //}
         while (!inconsistentRegions.isEmpty()) {
@@ -543,9 +553,9 @@ private:
 
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
-				    //this is wrong, the bonus should be effected on successor
-					//edge. So we have to take out a value from g and plug in
-					//the bonused effort
+                    // this is wrong, the bonus should be effected on successor
+                    // edge. So we have to take out a value from g and plug in
+                    // the bonused effort
                     int numberOfState = u->states.size();
                     double totalEffort = edge->interior ?
                             u->g + edge->getBonusEffort(numberOfState) :
@@ -561,7 +571,7 @@ private:
                     Edge* edge = edges[edgeId];
 
                     int numberOfState = u->states.size();
-					//in the paper, the g here is the old g
+                    // in the paper, the g here is the old g
                     double totalEffort = edge->interior ?
                             u->g + edge->getBonusEffort(numberOfState) :
                             u->g + edge->getEffort();
@@ -575,11 +585,17 @@ private:
                 updateRegion(u->id);
             }
         }
-
     }
 
 public:
     void publishAbstractGraph() {
+        static int counter = -1;
+        ++counter;
+        counter %= 100;
+        if (counter > 0) {
+            return;
+        }
+
         std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
@@ -591,7 +607,7 @@ public:
                         .get()
                         ->getStateDimension();
 
-        for (auto* region : regions) {
+        for (auto region : regions) {
             auto vectorState =
                     region->state
                             ->as<ompl::base::CompoundStateSpace::StateType>()
@@ -608,16 +624,19 @@ public:
                            << (dimension == 3 ? vectorState->values[2] * 100 :
                                                 0)
                            << "}}}\r\n";
+            region->alreadyVisualized = true;
         }
 
-        for (auto* edge : edges) {
+        for (auto edge : edges) {
             commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
                            << "\":{\"" << edge << "\":{"
                            << "\"source\":\"" << edge->sourceRegionId << "\","
                            << "\"target\":\"" << edge->targetRegionId << "\","
                            << "\"directed\":true,"
+                           << "\"label\":\"Te: " << edge->totalEffort << "\","
                            << "\"weight\":\"" << edge->alpha + edge->beta
                            << "\"}}}\r\n";
+            edge->alreadyVisualized = true;
         }
         commandBuilder << std::endl;
 
