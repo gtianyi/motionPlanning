@@ -596,6 +596,7 @@ public:
             return;
         }
 
+#ifdef STREAM_GRAPH
         std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
@@ -650,6 +651,7 @@ public:
         std::cout << res->status << std::endl;
         std::cout << res->body << std::endl;
         std::cout << "Graph test end" << std::endl;
+#endif
     }
 
     void updateRegion(const unsigned int region) {
