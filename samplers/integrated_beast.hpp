@@ -6,8 +6,11 @@
 #include <ompl/datastructures/NearestNeighborsSqrtApprox.h>
 #include <vector>
 #include "../structs/filemap.hpp"
-#include "../structs/httplib.hpp"
 #include "../structs/inplacebinaryheap.hpp"
+
+#ifdef STREAM_GRAPH
+#include "../structs/httplib.hpp"
+#endif
 
 using RegionId = unsigned int;
 using EdgeId = unsigned int;
@@ -263,7 +266,7 @@ public:
 
         connectRegions();
 
-//        ensureStartGoalConnectivity();
+        ensureStartGoalConnectivity();
 
 #ifdef STREAM_GRAPH
         publishAbstractGraph();
@@ -467,7 +470,7 @@ private:
     }
 
     void connectRegions() {
-        edges.clear();
+        clearAllEdges();
 
         for (auto& region : regions) {
             region->outEdges.clear();
@@ -476,10 +479,12 @@ private:
         }
     }
 
-    void clearAllEdges() const {
+    void clearAllEdges() {
         for (auto edge : edges) {
             delete edge;
         }
+        
+        edges.clear();
     }
 
     void connectRegions(Region* sourceRegion, Region* targetRegion) {
@@ -494,9 +499,12 @@ private:
 
     void addKNeighbors(Region* sourceRegion, size_t edgeCount) {
         std::vector<Region*> neighbors;
-        nearestRegions->nearestK(sourceRegion, edgeCount, neighbors);
+
+        // Add plus one for the current node.
+        nearestRegions->nearestK(sourceRegion, edgeCount + 1, neighbors);
 
         for (auto neighborRegion : neighbors) {
+            // Ignore the current node as a neighbor
             if (sourceRegion == neighborRegion)
                 continue;
 
