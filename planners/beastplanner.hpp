@@ -59,7 +59,7 @@ public:
                 this,
                 &BeastPlanner::ignoreSetterDouble,
                 &BeastPlanner::getInvalidEdgeDistributionBeta);
-   }
+    }
 
     virtual ~BeastPlanner() {}
 
@@ -90,9 +90,9 @@ public:
     virtual void setProblemDefinition(
             const ompl::base::ProblemDefinitionPtr& pdef) override {
         ompl::control::RRT::setProblemDefinition(pdef);
-        sampler =
-                std::unique_ptr<Sampler>(new Sampler(
-                    (ompl::base::SpaceInformation*)siC_,
+        
+        sampler = std::unique_ptr<Sampler>(
+                new Sampler((ompl::base::SpaceInformation*)siC_,
                         pdef_->getStartState(0),
                         pdef_->getGoal(),
                         dynamic_cast<base::GoalSampleableRegion*>(
@@ -100,13 +100,20 @@ public:
                         params));
 
         sampler->initialize();
-}
+    }
 
     /** \brief Continue solving for some amount of time. Return true if solution
      * was found. */
     virtual base::PlannerStatus solve(
-            const base::PlannerTerminationCondition& ptc) {
+            const base::PlannerTerminationCondition& ptc) override {
         checkValidity();
+
+        if (sampler == nullptr) {
+            throw ompl::Exception("BeastPlanner::solve",
+                    "Sampler is not "
+                    "initialized");
+        }
+
         base::Goal* goal = pdef_->getGoal().get();
         base::GoalSampleableRegion* goal_s =
                 dynamic_cast<base::GoalSampleableRegion*>(goal);
@@ -309,9 +316,7 @@ public:
         return base::PlannerStatus(solved, approximate);
     }
 
-    virtual void clear() {
-        RRT::clear();
-    }
+    virtual void clear() override { RRT::clear(); }
 
     std::unique_ptr<Sampler> sampler;
 protected:

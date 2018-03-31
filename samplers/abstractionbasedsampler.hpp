@@ -42,8 +42,8 @@ public:
 	}
 
 	virtual void initialize() = 0;
-	virtual bool sample(ompl::base::State *state) = 0;
-	virtual bool sampleNear(ompl::base::State *, const ompl::base::State *, const double) = 0;
+	virtual bool sample(ompl::base::State *state) override = 0;
+	virtual bool sampleNear(ompl::base::State *, const ompl::base::State *, const double) override = 0;
 
 	std::vector<unsigned int> getNeighboringCells(unsigned int index) const {
 		return abstraction->getNeighboringCells(index);
