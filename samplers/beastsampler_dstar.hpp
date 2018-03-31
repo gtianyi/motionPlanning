@@ -61,7 +61,9 @@ public:
     }
 
     virtual bool sample(ompl::base::State* from, ompl::base::State* to) {
+#ifdef STREAM_GRAPH
         publishAbstractGraph();
+#endif
 #ifdef STREAM_GRAPHICS
         static unsigned int sampleCount = 0;
         if (sampleCount++ % 100 == 0) {
