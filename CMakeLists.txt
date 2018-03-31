@@ -5,8 +5,10 @@ set(CMAKE_MODULE_PATH
         "${CMAKE_MODULE_PATH}"
         "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
-#set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3")
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+
+set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS} -g")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 
 set(SOURCE_FILES
         domains/acrobot.hpp
