@@ -1,9 +1,9 @@
-cmake_minimum_required (VERSION 2.6)
-project (MotionPlanning)
+cmake_minimum_required(VERSION 2.6)
+project(MotionPlanning)
 
 set(CMAKE_MODULE_PATH
-    "${CMAKE_MODULE_PATH}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
+        "${CMAKE_MODULE_PATH}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
 #set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -g")
@@ -36,10 +36,21 @@ include_directories(
 
 
 target_link_libraries(MotionPlanning
-	${OMPL_LIBRARIES}
-	${OMPLAPP_LIBRARIES}
-	${ASSIMP_LIBRARIES}
-	${FCL_LIBRARIES}
-	${Boost_LIBRARIES}
-	${LAPACK_LIBRARIES}
-)
+        ${OMPL_LIBRARIES}
+        ${OMPLAPP_LIBRARIES}
+        ${ASSIMP_LIBRARIES}
+        ${FCL_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${LAPACK_LIBRARIES}
+        )
+
+target_link_libraries(MotionPlanningTest
+        ${OMPL_LIBRARIES}
+        ${OMPLAPP_LIBRARIES}
+        ${ASSIMP_LIBRARIES}
+        ${FCL_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${LAPACK_LIBRARIES}
+        )
+
+
