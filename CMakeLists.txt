@@ -83,7 +83,7 @@ add_executable(MotionPlanningTest ${TEST_FILES} test/test.cpp)
 target_compile_definitions(MotionPlanning PRIVATE IKFAST_NO_MAIN)
 target_compile_definitions(MotionPlanningTest PRIVATE IKFAST_NO_MAIN)
 
-add_definitions(-DSTREAM_GRAPH)
+#add_definitions(-DSTREAM_GRAPH)
 #target_compile_definitions(MoreMotionPlanning PRIVATE STREAM_GRAPHICS IKFAST_NO_MAIN)
 
 find_package(OMPL REQUIRED)
@@ -91,12 +91,12 @@ find_package(ASSIMP REQUIRED)
 find_package(LAPACK REQUIRED)
 
 find_package(PkgConfig REQUIRED)
-find_package(fcl)
+pkg_search_module(FCL REQUIRED fcl)
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost 1.66 COMPONENTS system REQUIRED)
+find_package(Boost 1.50 COMPONENTS system REQUIRED)
 
 include_directories(
         ${OMPL_INCLUDE_DIRS}
