@@ -10,6 +10,7 @@
 #include "config.hpp"
 
 #include "HovercraftPlanning.hpp"
+#include "../structs/filemap.hpp"
 
 class HovercraftSpatialGoal : public ompl::base::GoalState {
 public:

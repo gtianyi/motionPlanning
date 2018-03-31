@@ -10,6 +10,7 @@
 #include "BlimpPlanning.hpp"
 #include "SE3RigidBodyPlanning.hpp"
 #include "config.hpp"
+#include "../structs/filemap.hpp"
 
 class BlimpSpatialGoal : public ompl::base::GoalState {
 public:

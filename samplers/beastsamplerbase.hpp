@@ -131,6 +131,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         unsigned int heapIndex = std::numeric_limits<unsigned int>::max();
         double g = std::numeric_limits<double>::infinity();
         double rhs = std::numeric_limits<double>::infinity();
+        bool alreadyVisualized = false;
     };
 
     struct Edge {
@@ -223,6 +224,7 @@ class BeastSamplerBase : public ompl::base::AbstractionBasedSampler {
         double effort = std::numeric_limits<double>::infinity();
         double initialEffort = std::numeric_limits<double>::infinity();
         bool interior = false;
+        bool alreadyVisualized = false;
     };
 
   public:

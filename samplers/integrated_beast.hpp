@@ -1,15 +1,19 @@
 #pragma once
 
+#include <ompl/base/Goal.h>
 #include <ompl/base/SpaceInformation.h>
+#include <ompl/base/goals/GoalSampleableRegion.h>
+#include <ompl/base/goals/GoalState.h>
 #include <ompl/datastructures/NearestNeighbors.h>
 #include <ompl/datastructures/NearestNeighborsGNATNoThreadSafety.h>
 #include <ompl/datastructures/NearestNeighborsSqrtApprox.h>
 #include <vector>
 #include "../structs/filemap.hpp"
 #include "../structs/inplacebinaryheap.hpp"
+#include "../structs/utils.hpp"
 
 #ifdef STREAM_GRAPH
-#include "../structs/httplib.hpp"
+#include "../dependencies/httplib.hpp"
 #endif
 
 using RegionId = unsigned int;
@@ -431,7 +435,6 @@ public:
         }
     }
 
-private:
     virtual void generateRegions(const size_t newRegionCount) {
         auto currentRegionCount = static_cast<unsigned int>(regions.size());
 
@@ -475,6 +478,9 @@ private:
         for (auto& region : regions) {
             region->outEdges.clear();
             region->inEdges.clear();
+        }
+        
+        for (auto& region : regions) {
             addKNeighbors(region, neighborEdgeCount);
         }
     }
@@ -483,12 +489,12 @@ private:
         for (auto edge : edges) {
             delete edge;
         }
-        
+
         edges.clear();
     }
 
     void connectRegions(Region* sourceRegion, Region* targetRegion) {
-        const EdgeId edgeId = static_cast<const EdgeId>(edges.size());
+        const auto edgeId = static_cast<const EdgeId>(edges.size());
 
         edges.push_back(new Edge(
                 sourceRegion->id, targetRegion->id, initialAlpha, initialBeta));
@@ -609,6 +615,7 @@ private:
                 updateRegion(u->id);
             }
         }
+        publishAbstractGraph();
     }
 
 public:
@@ -639,15 +646,17 @@ public:
                             ->as<ompl::base::RealVectorStateSpace::StateType>(
                                     0);
 
-            commandBuilder
-                    << "{\"" << (region->alreadyVisualized ? "cn" : "an")
-                    << "\":{\"" << region->id << "\":{"
-                    //                         << "\"label\":\"Streaming\""
-                    << "\"size\":2"
-                    << ",\"x\":" << vectorState->values[0] * 100
-                    << ",\"y\":" << vectorState->values[1] * 100 << ",\"z\":"
-                    << (dimension == 3 ? vectorState->values[2] * 100 : 0)
-                    << "}}}\r\n";
+            commandBuilder << "{\"" << (region->alreadyVisualized ? "cn" : "an")
+                           << "\":{\"" << region->id << "\":{"
+                           << "\"label\":\""
+                           << "g: " << region->g << "\""
+                           << ",\"size\":2"
+                           << ",\"x\":" << vectorState->values[0] * 100
+                           << ",\"y\":" << vectorState->values[1] * 100
+                           << ",\"z\":"
+                           << (dimension == 3 ? vectorState->values[2] * 100 :
+                                                0)
+                           << "}}}\r\n";
             region->alreadyVisualized = true;
         }
 
@@ -704,7 +713,7 @@ public:
         }
     }
 
-    RegionId stateToRegionId(const ompl::base::ScopedState<>& s) {
+    RegionId stateToRegionId(const ompl::base::ScopedState<>& s) const {
         //- 1 is intentional overflow on unsigned int
         auto ss = globalParameters.globalAppBaseControl
                           ->getGeometricComponentState(s, -1);

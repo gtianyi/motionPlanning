@@ -313,8 +313,8 @@ public:
         RRT::clear();
     }
 
-protected:
     std::unique_ptr<Sampler> sampler;
+protected:
     const FileMap& params;
     std::string whichSearch;
     double samplerInitializationTime = 0;

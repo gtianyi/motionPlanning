@@ -8,6 +8,7 @@
 #include <ompl/base/goals/GoalState.h>
 #include "SE2RigidBodyPlanning.hpp"
 #include "config.hpp"
+#include "../structs/filemap.hpp"
 
 class KinematicSpatialGoal : public ompl::base::GoalState {
 public:
