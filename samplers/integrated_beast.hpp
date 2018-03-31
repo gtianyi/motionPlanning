@@ -615,12 +615,15 @@ public:
                 updateRegion(u->id);
             }
         }
+#ifdef STREAM_GRAPH
         publishAbstractGraph();
+#endif
     }
 
 public:
 #ifdef STREAM_GRAPH
     void publishAbstractGraph() {
+        return; 
         static int counter = -1;
         ++counter;
         counter %= 100;

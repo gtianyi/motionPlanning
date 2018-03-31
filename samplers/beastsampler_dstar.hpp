@@ -55,7 +55,9 @@ public:
         vertices[startID].addState(startState);
         addOutgoingEdgesToOpen(startID);
 
+#ifdef STREAM_GRAPH
         publishAbstractGraph();
+#endif
     }
 
     virtual bool sample(ompl::base::State* from, ompl::base::State* to) {
@@ -375,7 +377,9 @@ protected:
                 }
             }
         }
+#ifdef STREAM_GRAPH
         publishAbstractGraph();
+#endif
     }
 
     bool addedGoalEdge;
