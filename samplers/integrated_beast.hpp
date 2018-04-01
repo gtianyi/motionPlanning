@@ -358,17 +358,14 @@ public:
         lastSelectedEdge = open.peek();
         targetSuccess = false;
 
-        //        std::cout << "top total effort " <<
-        //        lastSelectedEdge->totalEffort
-        //                  << std::endl;
-        //        std::cout << "top edge: " << lastSelectedEdge->sourceRegionId
-        //        << ","
-        //                  << lastSelectedEdge->targetRegionId << std::endl;
-        //        std::cout << "top target g "
-        //                  << regions[lastSelectedEdge->targetRegionId]->g <<
-        //                  std::endl;
-        //        std::cout << "top a b " << lastSelectedEdge->alpha << " "
-        //                  << lastSelectedEdge->beta << std::endl;
+        //std::cout << "top total effort " << lastSelectedEdge->totalEffort
+        //          << std::endl;
+        //std::cout << "top edge: " << lastSelectedEdge->sourceRegionId << ","
+        //          << lastSelectedEdge->targetRegionId << std::endl;
+        //std::cout << "top target g "
+        //          << regions[lastSelectedEdge->targetRegionId]->g << std::endl;
+        //std::cout << "top a b " << lastSelectedEdge->alpha << " "
+        //          << lastSelectedEdge->beta << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
         const RegionId targetRegionId = lastSelectedEdge->targetRegionId;
@@ -482,7 +479,7 @@ public:
             region->outEdges.clear();
             region->inEdges.clear();
         }
-
+        
         for (auto& region : regions) {
             addKNeighbors(region, neighborEdgeCount);
         }
@@ -586,12 +583,9 @@ public:
 
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
-                    // this is wrong, the bonus should be effected on successor
-                    // edge. So we have to take out a value from g and plug in
-                    // the bonused effort
-                    int numberOfState = u->states.size();
+
                     double totalEffort = edge->interior ?
-                            u->g + edge->getBonusEffort(numberOfState) :
+							getInteriorEdgeEffort(edge):
                             u->g + edge->getEffort();
 
                     edge->totalEffort = totalEffort;
@@ -603,10 +597,9 @@ public:
                 for (auto edgeId : u->inEdges) {
                     Edge* edge = edges[edgeId];
 
-                    int numberOfState = u->states.size();
-                    // in the paper, the g here is the old g
+                    // in the paper, the g here is the old g?
                     double totalEffort = edge->interior ?
-                            u->g + edge->getBonusEffort(numberOfState) :
+                            getInteriorEdgeEffort(edge) :
                             u->g + edge->getEffort();
 
                     edge->totalEffort = totalEffort;
