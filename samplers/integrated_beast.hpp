@@ -334,9 +334,9 @@ public:
                 }
 
                 lastSelectedEdge->alpha++;
-                // if (isGoalEdge(lastSelectedEdge)) {
-                //    lastSelectedEdge->interior = true;
-                //}
+                if (isGoalEdge(lastSelectedEdge)) {
+                    lastSelectedEdge->interior = true;
+                }
             } else {
                 lastSelectedEdge->beta++;
             }
