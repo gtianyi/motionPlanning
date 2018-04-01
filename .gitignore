@@ -1,7 +1,8 @@
 /build
 /debug
 /cmake-build-debug
-/build_debug
+/build_debug 
+/build_release 
 /experiments
 /scripts
 /inst
@@ -53,4 +54,4 @@
 *.inst
 
 #Editor config
-.ycm_extra_config.py
+.ycm_extra_conf.py
