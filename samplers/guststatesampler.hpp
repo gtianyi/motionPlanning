@@ -43,10 +43,10 @@ class guststatesampler : public AbstractionBasedSampler {
 
         int64_t getRandomRegionAlongPathToGoal(ompl::RNG &randomNumbers) const {
             unsigned int randomIndex = (unsigned int)(randomNumbers.uniform01() * regionPath.size());
-            if(regionPath.size() == 0) {
-                fprintf(stderr, "about to fail\n");
+            //if(regionPath.size() == 0) {
+                //fprintf(stderr, "about to fail\n");
                 // return 0;
-            }
+            //}
             return regionPath[randomIndex];
         }
 
@@ -175,7 +175,7 @@ class guststatesampler : public AbstractionBasedSampler {
 
                 double newValue = current->heuristic + abstraction->abstractDistanceFunctionByIndex(current->id, kidIndex);
 
-                Vertex *kid = &vertices[kidIndex];
+                Vertex *kid = vertices[kidIndex];
 
                 //this will update the value of the vertex if needed
                 bool addedBetterParent = kid->addParent(current->id, newValue, current->regionPath);
@@ -191,7 +191,7 @@ class guststatesampler : public AbstractionBasedSampler {
         }
     }
 
-    std::vector<Vertex> vertices;
+    std::vector<Vertex*> vertices;
 
     std::vector<Vertex*> regionHeap;
     ompl::RNG randomNumbers;
@@ -235,26 +235,27 @@ class guststatesampler : public AbstractionBasedSampler {
         unsigned int abstractionSize = abstraction->getAbstractionSize();
         vertices.clear();
 
-        factor=1000000;
-        vertices.reserve(abstractionSize*factor);
+        //factor=1000000;
+		//vertices.reserve(abstractionSize);
 
         for(unsigned int i = 0; i < abstractionSize; ++i) {
-            vertices.emplace_back(i);
+				Vertex* v= new Vertex(i); 
+            vertices.push_back(v);
         }
 
         startRegionId = abstraction->getStartIndex();
         goalRegionId = abstraction->getGoalIndex();
-        dijkstra(&vertices[goalRegionId]);
+        dijkstra(vertices[goalRegionId]);
 
         //the connectivity check being done on abstraction initialization should assure this
-        assert(!std::isinf(vertices[startRegionId].heuristic));
+        assert(!std::isinf(vertices[startRegionId]->heuristic));
 
         for (int j = 0; j < abstractionSize; ++j)
         {
-            if (vertices[j].heuristic==INFINITY)
+            if (vertices[j]->heuristic==INFINITY)
                 continue;
-            if (vertices[j].heuristic>hmax)
-                hmax =vertices[j].heuristic;
+            if (vertices[j]->heuristic>hmax)
+                hmax =vertices[j]->heuristic;
         }
 
 
@@ -316,13 +317,13 @@ class guststatesampler : public AbstractionBasedSampler {
         if(!usesplit)
             return;
         // check for the max number of splitting per region
-        if ( vertices[original_region_id].num_spliting >=max_no_reg)
+        if ( vertices[original_region_id]->num_spliting >=max_no_reg)
             return;
         // check for max memory size
         if (vertices.size()==prmSize*factor)
             return;
 
-        vertices[original_region_id].num_spliting++;
+        vertices[original_region_id]->num_spliting++;
 
         // old abstract size before splitting
         unsigned int oldabstractionSize = abstractionGust->getAbstractionSize();
@@ -333,20 +334,23 @@ class guststatesampler : public AbstractionBasedSampler {
         // new abstract size after  splitting
         unsigned int abstractionSize = abstractionGust->getAbstractionSize();
 
+		//vertices.resize(abstractionSize);
+
         // adding new region to the vector
         for(unsigned int i = oldabstractionSize; i < abstractionSize; ++i) {
-            vertices.emplace_back(i);
+            Vertex* v = new Vertex(i);
+            vertices.push_back(v);
         }
 
         // copying all the region parameter from the old one to the new
 
-        vertices[oldabstractionSize].weight=vertices[original_region_id].weight;
+        vertices[oldabstractionSize]->weight=vertices[original_region_id]->weight;
 
-        vertices[oldabstractionSize].heuristic=vertices[original_region_id].heuristic;
+        vertices[oldabstractionSize]->heuristic=vertices[original_region_id]->heuristic;
 
-        for (int j = 0; j < vertices[original_region_id].regionPath.size(); ++j) {
-
-            vertices[oldabstractionSize].regionPath.emplace_back(vertices[original_region_id].regionPath[j]);
+        for (int j = 0; j < vertices[original_region_id]->regionPath.size(); ++j) {
+            vertices[oldabstractionSize]->regionPath.emplace_back(
+                    vertices[original_region_id]->regionPath[j]);
         }
 
     }
@@ -361,14 +365,14 @@ class guststatesampler : public AbstractionBasedSampler {
         incomingState = state;
 
         unsigned int newCellId = abstraction->mapToAbstractRegion(incomingState);
-        if(!vertices[newCellId].onOpen) {
-            vertices[newCellId].selected(alpha,delta ,beta,hmax);
+        if(!vertices[newCellId]->onOpen) {
+            vertices[newCellId]->selected(alpha,delta ,beta,hmax);
 
-            regionHeap.push_back(&vertices[newCellId]);
+            regionHeap.push_back(vertices[newCellId]);
 
             std::push_heap(regionHeap.begin(), regionHeap.end(), Vertex::HeapCompare);
 
-            vertices[newCellId].onOpen = true;
+            vertices[newCellId]->onOpen = true;
         }
     }
 
