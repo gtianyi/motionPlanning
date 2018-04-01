@@ -333,10 +333,14 @@ public:
                     addGoalEdge();
                 }
 
+                if (!isGoalEdge(lastSelectedEdge)) {
+                    // Last edge becomes interior as the 
+                    // edge.target is on the frontier now
+                    lastSelectedEdge->interior = true;
+                    // The goal edge is special that can't be interior
+                }
+                
                 lastSelectedEdge->alpha++;
-                // if (isGoalEdge(lastSelectedEdge)) {
-                //    lastSelectedEdge->interior = true;
-                //}
             } else {
                 lastSelectedEdge->beta++;
             }
@@ -353,6 +357,17 @@ public:
             if (targetSuccess) {
                 addOutgoingEdgesToOpen(lastSelectedEdge->targetRegionId);
             }
+        }
+
+        if (addedGoalEdge && isGoalEdge(open.peek())) {
+            static int counter = 5;
+            if (counter == 0) {
+                counter = 5;
+                open.pop();
+                addedGoalEdge = false;
+            }
+
+            --counter;
         }
 
         lastSelectedEdge = open.peek();
