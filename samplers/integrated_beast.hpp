@@ -355,17 +355,20 @@ public:
             }
         }
 
-        lastSelectedEdge = open.pop();
+        lastSelectedEdge = open.peek();
         targetSuccess = false;
 
-        std::cout << "top total effort " << lastSelectedEdge->totalEffort
-                  << std::endl;
-        std::cout << "top edge: " << lastSelectedEdge->sourceRegionId << ","
-                  << lastSelectedEdge->targetRegionId << std::endl;
-        std::cout << "top target g "
-                  << regions[lastSelectedEdge->targetRegionId]->g << std::endl;
-        std::cout << "top a b " << lastSelectedEdge->alpha << " "
-                  << lastSelectedEdge->beta << std::endl;
+        //        std::cout << "top total effort " <<
+        //        lastSelectedEdge->totalEffort
+        //                  << std::endl;
+        //        std::cout << "top edge: " << lastSelectedEdge->sourceRegionId
+        //        << ","
+        //                  << lastSelectedEdge->targetRegionId << std::endl;
+        //        std::cout << "top target g "
+        //                  << regions[lastSelectedEdge->targetRegionId]->g <<
+        //                  std::endl;
+        //        std::cout << "top a b " << lastSelectedEdge->alpha << " "
+        //                  << lastSelectedEdge->beta << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegionId;
         const RegionId targetRegionId = lastSelectedEdge->targetRegionId;
@@ -409,7 +412,7 @@ public:
     void addGoalEdge() {
         // We might want to tune the initial goal edge beta distribution.
         // to bias towards the goal edge
-        auto goalEdge = new Edge(goalRegionId, goalRegionId, 2, 1);
+        auto goalEdge = new Edge(goalRegionId, goalRegionId, 1, 1);
         edges.push_back(goalEdge);
 
         goalEdge->totalEffort = 1;
@@ -479,7 +482,7 @@ public:
             region->outEdges.clear();
             region->inEdges.clear();
         }
-        
+
         for (auto& region : regions) {
             addKNeighbors(region, neighborEdgeCount);
         }
@@ -623,7 +626,7 @@ public:
 public:
 #ifdef STREAM_GRAPH
     void publishAbstractGraph() {
-        return; 
+        //        return;
         static int counter = -1;
         ++counter;
         counter %= 100;
@@ -654,9 +657,9 @@ public:
                            << "\"label\":\""
                            << "g: " << region->g << "\""
                            << ",\"size\":2"
-                           << ",\"x\":" << vectorState->values[0] * 100
-                           << ",\"y\":" << vectorState->values[1] * 100
-                           << ",\"z\":"
+                           << R"(,"x":)" << vectorState->values[0] * 100
+                           << R"(,"y\":)" << vectorState->values[1] * 100
+                           << R"(,"z":)"
                            << (dimension == 3 ? vectorState->values[2] * 100 :
                                                 0)
                            << "}}}\r\n";
@@ -666,11 +669,11 @@ public:
         for (auto edge : edges) {
             commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
                            << "\":{\"" << edge << "\":{"
-                           << "\"source\":\"" << edge->sourceRegionId << "\","
-                           << "\"target\":\"" << edge->targetRegionId << "\","
+                           << R"("source":")" << edge->sourceRegionId << "\","
+                           << R"("target":")" << edge->targetRegionId << "\","
                            << "\"directed\":true,"
-                           << "\"label\":\"Te: " << edge->totalEffort << "\","
-                           << "\"weight\":\"" << edge->alpha + edge->beta
+                           << R"("label":"Te: )" << edge->totalEffort << "\","
+                           << R"("weight":")" << edge->alpha + edge->beta
                            << "\"}}}\r\n";
             edge->alreadyVisualized = true;
         }
