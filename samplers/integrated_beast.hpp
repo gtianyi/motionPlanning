@@ -444,6 +444,14 @@ public:
 
         lastSelectedEdge = open.peek();
         targetSuccess = false;
+        Edge* const pop = open.pop();
+
+//        std::cout << "Edge: " << lastSelectedEdge->sourceRegion->id << "->"
+//                  << lastSelectedEdge->targetRegion->id
+//                  << " Teffort:" << lastSelectedEdge->totalEffort
+//                  << " Second best: " << open.peek()->totalEffort << "\n";
+//
+        open.push(pop);
 
         // std::cout << "top total effort " << lastSelectedEdge->totalEffort
         //          << std::endl;
