@@ -821,12 +821,17 @@ public:
         }
     }
 
-    Region* stateToRegionId(const ompl::base::ScopedState<>& s) const {
+    Region* findRegion(State* state) const {
+        Region region(std::numeric_limits<RegionId>::max(), state);
+        return nearestRegions->nearest(&region);
+    }
+
+    Region* findRegion(const ompl::base::ScopedState<>& s) const {
         //- 1 is intentional overflow on unsigned int
         auto ss = globalParameters.globalAppBaseControl
                           ->getGeometricComponentState(s, -1);
 
-        Region center(10000, ss.get());
+        Region center(std::numeric_limits<RegionId>::max(), ss.get());
         return nearestRegions->nearest(&center);
     }
 
