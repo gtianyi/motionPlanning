@@ -1,5 +1,6 @@
 #pragma once
 
+#include <math.h>
 #include <ompl/base/Goal.h>
 #include <ompl/base/SpaceInformation.h>
 #include <ompl/base/goals/GoalSampleableRegion.h>
@@ -40,16 +41,20 @@ public:
         Region(Region&&) = delete;
 
         static bool pred(const Region* lhs, const Region* rhs) {
-            const double lhsPrimary = std::min(lhs->g, lhs->rhs);
-            const double lhsSecondary = std::min(lhs->g, lhs->rhs);
+            return lhs->key < rhs->key;
 
-            const double rhsPrimary = std::min(rhs->g, rhs->rhs);
-            const double rhsSecondary = std::min(rhs->g, rhs->rhs);
-
-            if (lhsPrimary == rhsPrimary) {
-                return lhsSecondary < rhsSecondary;
-            }
-            return lhsPrimary < rhsPrimary;
+            //            const double lhsPrimary = std::min(lhs->g, lhs->rhs);
+            //            const double lhsSecondary = std::min(lhs->g,
+            //            lhs->rhs);
+            //
+            //            const double rhsPrimary = std::min(rhs->g, rhs->rhs);
+            //            const double rhsSecondary = std::min(rhs->g,
+            //            rhs->rhs);
+            //
+            //            if (lhsPrimary == rhsPrimary) {
+            //                return lhsSecondary < rhsSecondary;
+            //            }
+            //            return lhsPrimary < rhsPrimary;
         }
 
         static unsigned int getHeapIndex(const Region* region) {
@@ -120,7 +125,20 @@ public:
         Edge(Edge&&) = delete;
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
-            return lhs->totalEffort < rhs->totalEffort;
+            return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
+                + rhs->getPenalty());
+            //            if(lhs->totalEffort != rhs->totalEffort) {
+            //                return lhs->totalEffort < rhs->totalEffort;
+            //            }
+            //            if(lhs->targetRegion->id != rhs->targetRegion->id) {
+            //                return lhs->targetRegion->id <
+            //                rhs->targetRegion->id;
+            //            }
+            //            if(lhs->sourceRegion->id != rhs->sourceRegion->id) {
+            //                return lhs->sourceRegion->id <
+            //                rhs->sourceRegion->id;
+            //            }
+            //            return false;
         }
 
         static unsigned int getHeapIndex(const Edge* edge) {
@@ -131,12 +149,31 @@ public:
             edge->heapIndex = heapIndex;
         }
 
+        double getPenalty() const {
+            int totalTries = 0;
+            for (auto inEdge : targetRegion->inEdges) {
+                totalTries += inEdge->alpha;
+            }
+
+            const double penalty = sqrt((alpha + beta) / log(totalTries));
+            return penalty * 0.5;
+        }
+        
         double getEffort() const {
             if (alpha <= 0) {
                 throw ompl::Exception("IntegratedBeast::Edge::getEffort",
                         "Alpha value must be greater than 0");
             }
-            return (double)(alpha + beta) / (double)alpha;
+
+            int totalTries = 0;
+            for (auto inEdge : targetRegion->inEdges) {
+                totalTries += inEdge->alpha;
+            }
+
+            const double penalty = sqrt((alpha + beta) / log(totalTries));
+            const double expectedEffort =
+                    (double)(alpha + beta) / (double)alpha;
+            return expectedEffort;
         }
 
         double getBonusEffort(unsigned int numberOfStates) const {
@@ -151,7 +188,17 @@ public:
                                     (double)numberOfStates) +
                     (1. / numberOfStates);
             double estimate = 1. / probability;
+            return estimate;
+        }
 
+        double getScottBonusEffort(unsigned int numberOfStates) const {
+            double additive = 1. / numberOfStates;
+            //            double additive = (alpha + beta) /
+            //            (double)numberOfStates;
+            double probability = (alpha + additive) / (alpha + additive + beta);
+            double estimate = 1. / probability;
+            
+            const double penalty = sqrt((alpha + beta) / log(numberOfStates));
             return estimate;
         }
 
@@ -284,6 +331,10 @@ public:
 
         connectRegions();
 
+        // Remove goal region out edges
+        regions[goalRegionId]->outEdges.clear();
+        regions[startRegionId]->inEdges.clear();
+
         ensureStartGoalConnectivity();
 
 #ifdef STREAM_GRAPH
@@ -347,11 +398,18 @@ public:
                     addGoalEdge();
                 }
 
-                if (!isGoalEdge(lastSelectedEdge)) {
-                    // Last edge becomes interior as the
-                    // edge.target is on the frontier now
-                    lastSelectedEdge->interior = true;
-                    // The goal edge is special that can't be interior
+                //                lastSelectedEdge->interior = true;
+                //
+                //                if (!isGoalEdge(lastSelectedEdge)) {
+                //                    // Last edge becomes interior as the
+                //                    // edge.target is on the frontier now
+                //                    lastSelectedEdge->interior = true;
+                //                    // The goal edge is special that can't be
+                //                    interior
+                //                }
+
+                for (auto inEdge : lastSelectedEdge->sourceRegion->inEdges) {
+                    inEdge->interior = true;
                 }
 
                 lastSelectedEdge->alpha++;
@@ -373,16 +431,16 @@ public:
             }
         }
 
-        if (addedGoalEdge && isGoalEdge(open.peek())) {
-            static int counter = 5;
-            if (counter == 0) {
-                counter = 5;
-                open.pop();
-                addedGoalEdge = false;
-            }
-
-            --counter;
-        }
+        //                if (addedGoalEdge && isGoalEdge(open.peek())) {
+        //                    static int counter = 5;
+        //                    if (counter == 0) {
+        //                        counter = 5;
+        //                        open.pop();
+        //                        addedGoalEdge = false;
+        //                    }
+        //
+        //                    --counter;
+        //                }
 
         lastSelectedEdge = open.peek();
         targetSuccess = false;
@@ -565,7 +623,9 @@ public:
         double bestValue = std::numeric_limits<double>::infinity();
 
         for (auto outEdge : edge->targetRegion->outEdges) {
-            double value = outEdge->getBonusEffort(numberOfStates) +
+            //            double value = outEdge->getBonusEffort(numberOfStates)
+            //            +
+            double value = outEdge->getScottBonusEffort(numberOfStates) +
                     outEdge->targetRegion->g;
 
             if (value < bestValue) {
@@ -587,9 +647,7 @@ public:
 
             edge->totalEffort = targetRegion->g + edge->getEffort();
 
-            if (!open.inHeap(edge)) {
-                open.push(edge);
-            }
+            insertOrUpdateOpen(edge);
         }
     }
 
@@ -779,4 +837,6 @@ public:
     Edge* lastSelectedEdge = nullptr;
     bool targetSuccess = false;
     bool addedGoalEdge = false;
+
+    Timer* goalEdgeTimer;
 };
