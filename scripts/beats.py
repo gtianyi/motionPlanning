@@ -82,9 +82,9 @@ def assemble_experiments(configurations):
     """Set up executable commands for the given list of experiments."""
 
     command_template = 'export LD_LIBRARY_PATH=/home/aifs1/gu/lib:$LD_LIBRARY_PATH &&' \
-                       'cd /home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build/ &&' \
+                       'cd /home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build_release/ &&' \
                        'printf "{configuration}" | ' \
-                       '/home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build/MotionPlanning'
+                       '/home/aifs1/gu/gopath/src/github.com/gu/motionPlanning/build_release/MotionPlanning'
 
     return [Experiment(configuration_parser.parse_configuration(configuration),
                        command_template.format(configuration=configuration))

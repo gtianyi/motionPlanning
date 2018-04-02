@@ -126,23 +126,23 @@ ompl::base::PlannerPtr getPlanner(const BenchmarkData& benchmarkData,
         }
 
     }
-//    else if (planner.compare("BEASTnew") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::BeastPlannernew(spaceInformation, params));
-//    } else if (planner.compare("BEASTUpdateRightEdge") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::BeastPlannerUpdateRightEdge(
-//                spaceInformation, params));
-//    } else if (planner.compare("UCTtest") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::UCTPlanner(spaceInformation, params));
-//    } else if (planner.compare("BEATS") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::BeatsPlanner(spaceInformation, params));
-//    } else if (planner.compare("GUST") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::gust(spaceInformation, params));
-//    }
+    else if (planner.compare("BEASTnew") == 0) {
+        plannerPointer = ompl::base::PlannerPtr(
+            new ompl::control::BeastPlannernew(spaceInformation, params));
+    } else if (planner.compare("BEASTUpdateRightEdge") == 0) {
+        plannerPointer = ompl::base::PlannerPtr(
+            new ompl::control::BeastPlannerUpdateRightEdge(
+                spaceInformation, params));
+    } else if (planner.compare("UCTtest") == 0) {
+        plannerPointer = ompl::base::PlannerPtr(
+            new ompl::control::UCTPlanner(spaceInformation, params));
+    } else if (planner.compare("BEATS") == 0) {
+        plannerPointer = ompl::base::PlannerPtr(
+            new ompl::control::BeatsPlanner(spaceInformation, params));
+    } else if (planner.compare("GUST") == 0) {
+        plannerPointer = ompl::base::PlannerPtr(
+            new ompl::control::gust(spaceInformation, params));
+    }
 
         /* anytime planners */
     else if (planner.compare("SST") == 0) {
