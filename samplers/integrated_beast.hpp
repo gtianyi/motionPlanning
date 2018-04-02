@@ -125,20 +125,18 @@ public:
         Edge(Edge&&) = delete;
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
-            return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
-                + rhs->getPenalty());
-            //            if(lhs->totalEffort != rhs->totalEffort) {
-            //                return lhs->totalEffort < rhs->totalEffort;
-            //            }
-            //            if(lhs->targetRegion->id != rhs->targetRegion->id) {
-            //                return lhs->targetRegion->id <
-            //                rhs->targetRegion->id;
-            //            }
-            //            if(lhs->sourceRegion->id != rhs->sourceRegion->id) {
-            //                return lhs->sourceRegion->id <
-            //                rhs->sourceRegion->id;
-            //            }
-            //            return false;
+            //return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
+            //    + rhs->getPenalty());
+            if (lhs->totalEffort != rhs->totalEffort) {
+                return lhs->totalEffort < rhs->totalEffort;
+            }
+            if (lhs->targetRegion->id != rhs->targetRegion->id) {
+                return lhs->targetRegion->id < rhs->targetRegion->id;
+            }
+            if (lhs->sourceRegion->id != rhs->sourceRegion->id) {
+                return lhs->sourceRegion->id < rhs->sourceRegion->id;
+            }
+            return false;
         }
 
         static unsigned int getHeapIndex(const Edge* edge) {
@@ -202,6 +200,18 @@ public:
             return estimate;
         }
 
+        double getBonusEffort2(unsigned int numberOfStates) const {
+            double additive = 1;
+            //            double additive = (alpha + beta) /
+            //            (double)numberOfStates;
+            double probability = (alpha + additive) / (alpha + additive + beta);
+            double estimate = 1. / probability;
+            
+            return estimate;
+        }
+
+        double getBonusEffort3(unsigned int numberOfStates) const { return 1; }
+
         Region* getInEdgeTargetRegion() const { return sourceRegion; }
 
         Region* getInEdgeSourceRegion() const { return targetRegion; }
@@ -241,6 +251,8 @@ public:
                       params.integerVal("InitialAlpha"))},
               initialBeta{static_cast<const unsigned int>(
                       params.integerVal("InitialBeta"))},
+              bonusType{static_cast<const unsigned int>(
+                      params.integerVal("BonusType"))},
               fullStartState{nullptr},
               fullGoalState{nullptr},
               abstractStartState{
@@ -398,7 +410,7 @@ public:
                     addGoalEdge();
                 }
 
-                //                lastSelectedEdge->interior = true;
+                lastSelectedEdge->interior = true;
                 //
                 //                if (!isGoalEdge(lastSelectedEdge)) {
                 //                    // Last edge becomes interior as the
@@ -408,9 +420,9 @@ public:
                 //                    interior
                 //                }
 
-                for (auto inEdge : lastSelectedEdge->sourceRegion->inEdges) {
-                    inEdge->interior = true;
-                }
+                //for (auto inEdge : lastSelectedEdge->sourceRegion->inEdges) {
+                //    inEdge->interior = true;
+                // }
 
                 lastSelectedEdge->alpha++;
             } else {
@@ -444,14 +456,14 @@ public:
 
         lastSelectedEdge = open.peek();
         targetSuccess = false;
-        Edge* const pop = open.pop();
+        //Edge* const pop = open.pop();
 
 //        std::cout << "Edge: " << lastSelectedEdge->sourceRegion->id << "->"
 //                  << lastSelectedEdge->targetRegion->id
 //                  << " Teffort:" << lastSelectedEdge->totalEffort
 //                  << " Second best: " << open.peek()->totalEffort << "\n";
 //
-        open.push(pop);
+        //open.push(pop);
 
         // std::cout << "top total effort " << lastSelectedEdge->totalEffort
         //          << std::endl;
@@ -530,7 +542,9 @@ public:
         region->addState(state);
 
         if (lastSelectedEdge != nullptr &&
-                region->id == lastSelectedEdge->targetRegion->id) {
+                region->id == lastSelectedEdge->targetRegion->id 
+                //&&!isGoalEdge(lastSelectedEdge)
+				) {
             targetSuccess = true;
         } else {
             addOutgoingEdgesToOpen(region);
@@ -631,17 +645,32 @@ public:
         double bestValue = std::numeric_limits<double>::infinity();
 
         for (auto outEdge : edge->targetRegion->outEdges) {
-            //            double value = outEdge->getBonusEffort(numberOfStates)
-            //            +
-            double value = outEdge->getScottBonusEffort(numberOfStates) +
-                    outEdge->targetRegion->g;
+            double bonusValue = 0;
+            switch (bonusType) {
+            case 0:
+                bonusValue = outEdge->getScottBonusEffort(numberOfStates);
+                break;
+            case 1:
+                bonusValue = outEdge->getBonusEffort(numberOfStates);
+                break;
+            case 2:
+                bonusValue = outEdge->getBonusEffort2(numberOfStates);
+                break;
+            case 3:
+                bonusValue = outEdge->getBonusEffort3(numberOfStates);
+                break;
+            default:
+                break;
+            }
+
+            double value = bonusValue + outEdge->targetRegion->g;
 
             if (value < bestValue) {
                 bestValue = value;
             }
         }
 
-        return bestValue;
+        return bestValue + edge->getEffort();
     }
 
     void addOutgoingEdgesToOpen(const Region* region) {
@@ -823,6 +852,7 @@ public:
     const unsigned int neighborEdgeCount;
     const unsigned int initialAlpha;
     const unsigned int initialBeta;
+	const unsigned int bonusType;
 
     ompl::base::State* fullStartState;
     ompl::base::State* fullGoalState;
