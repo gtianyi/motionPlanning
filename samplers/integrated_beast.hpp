@@ -248,6 +248,21 @@ public:
     }
 
     void initialize() {
+        goalEdgeTimer = new Timer("Goal edge timer");
+
+        std::cout << "IntBeast::Full::Seed: " << ompl::RNG::getSeed()
+                  << std::endl;
+
+        fullStateSampler = spaceInformation->allocStateSampler();
+
+        std::cout << "IntBeast::Abstract::Seed: " << ompl::RNG::getSeed()
+                  << std::endl;
+        abstractSpace = globalParameters.globalAbstractAppBaseGeometric
+                                ->getStateSpace();
+        abstractSampler = globalParameters.globalAbstractAppBaseGeometric
+                                  ->getSpaceInformation()
+                                  ->allocValidStateSampler();
+
         initializeRegions(initialRegionCount);
 
         regions[goalRegionId]->rhs = 0;
