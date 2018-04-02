@@ -19,6 +19,7 @@
 
 using RegionId = unsigned int;
 using EdgeId = unsigned int;
+using State = ompl::base::State;
 
 class IntegratedBeast {
 public:
@@ -494,6 +495,21 @@ public:
         publishAbstractGraph();
 #endif
         return true;
+    }
+
+    State* sampleAbstractState(const Region* samplingRegion) {
+        auto state = abstractSpace->allocState();
+        while (true) {
+            abstractSampler->sampleUniformNear(
+                    state, samplingRegion->state, stateRadius);
+
+            auto sampleHostRegion = findRegion(state);
+            if (sampleHostRegion->id == samplingRegion->id) {
+                break;
+            }
+        }
+
+        return state;
     }
 
     bool isGoalEdge(Edge* edge) {
