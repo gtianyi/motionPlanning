@@ -149,15 +149,16 @@ public:
         }
 
         double getPenalty() const {
-            int totalTries = 0;
-            for (auto inEdge : targetRegion->inEdges) {
-                totalTries += inEdge->alpha;
-            }
+            int totalTries = targetRegion->getTotalTries();
+            if (totalTries < 10)
+                return 0;
 
-            const double penalty = sqrt((alpha + beta) / log(totalTries));
-            return penalty * 0.5;
+            double gamma = 0.01;
+            const double penalty =
+                    sqrt(gamma * (alpha + beta) / log(totalTries));
+            return penalty;
         }
-        
+
         double getEffort() const {
             if (alpha <= 0) {
                 throw ompl::Exception("IntegratedBeast::Edge::getEffort",
@@ -196,7 +197,7 @@ public:
             //            (double)numberOfStates;
             double probability = (alpha + additive) / (alpha + additive + beta);
             double estimate = 1. / probability;
-            
+
             const double penalty = sqrt((alpha + beta) / log(numberOfStates));
             return estimate;
         }
@@ -207,7 +208,7 @@ public:
             //            (double)numberOfStates;
             double probability = (alpha + additive) / (alpha + additive + beta);
             double estimate = 1. / probability;
-            
+
             return estimate;
         }
 
@@ -255,6 +256,7 @@ public:
                       params.integerVal("InitialBeta"))},
               bonusType{static_cast<const unsigned int>(
                       params.integerVal("BonusType"))},
+              useSplit{params.boolVal("UseSplit")},
               fullStartState{nullptr},
               fullGoalState{nullptr},
               abstractStartState{
@@ -300,8 +302,6 @@ public:
 
     ~IntegratedBeast() {
         for (auto region : regions) {
-            //    abstractSpace->freeState(
-            //            const_cast<ompl::base::State*>(region->state));
             delete region;
         }
 
@@ -343,7 +343,7 @@ public:
         generateStartGoalRegions();
         generateRegions(regionCount);
 
-        connectRegions();
+        connectAllRegions();
 
         // Remove goal region out edges
         regions[goalRegionId]->outEdges.clear();
@@ -399,10 +399,8 @@ public:
         auto newRegionCount = regions.size() * resizeFactor;
         generateRegions(static_cast<const size_t>(newRegionCount));
         clearAllEdges();
-        connectRegions();
+        connectAllRegions();
     }
-
-    void splitRegion() {}
 
     bool sample(ompl::base::State* from, ompl::base::State* to) {
         if (lastSelectedEdge != nullptr) {
@@ -413,22 +411,12 @@ public:
                 }
 
                 lastSelectedEdge->interior = true;
-                //
-                //                if (!isGoalEdge(lastSelectedEdge)) {
-                //                    // Last edge becomes interior as the
-                //                    // edge.target is on the frontier now
-                //                    lastSelectedEdge->interior = true;
-                //                    // The goal edge is special that can't be
-                //                    interior
-                //                }
-
-                //for (auto inEdge : lastSelectedEdge->sourceRegion->inEdges) {
-                //    inEdge->interior = true;
-                // }
-
                 lastSelectedEdge->alpha++;
             } else {
                 lastSelectedEdge->beta++;
+                if (useSplit && (lastSelectedEdge->beta % 10 == 0)) {
+                    splitRegion(lastSelectedEdge->targetRegion);
+                }
             }
 
             lastSelectedEdge->totalEffort = lastSelectedEdge->interior ?
@@ -445,27 +433,13 @@ public:
             }
         }
 
-        //                if (addedGoalEdge && isGoalEdge(open.peek())) {
-        //                    static int counter = 5;
-        //                    if (counter == 0) {
-        //                        counter = 5;
-        //                        open.pop();
-        //                        addedGoalEdge = false;
-        //                    }
-        //
-        //                    --counter;
-        //                }
-
         lastSelectedEdge = open.peek();
         targetSuccess = false;
-        //Edge* const pop = open.pop();
 
 //        std::cout << "Edge: " << lastSelectedEdge->sourceRegion->id << "->"
 //                  << lastSelectedEdge->targetRegion->id
 //                  << " Teffort:" << lastSelectedEdge->totalEffort
 //                  << " Second best: " << open.peek()->totalEffort << "\n";
-//
-        //open.push(pop);
 
         // std::cout << "top total effort " << lastSelectedEdge->totalEffort
         //          << std::endl;
@@ -500,8 +474,8 @@ public:
 
             fullStateSampler->sampleUniformNear(
                     to, fullState.get(), stateRadius);
-			//alternative: rejection sampling
-            //sampleFullState(regions[targetRegionId], to);
+            // alternative: rejection sampling
+            // sampleFullState(regions[targetRegionId], to);
         }
 
 #ifdef STREAM_GRAPH
@@ -511,15 +485,14 @@ public:
     }
 
     void sampleFullState(const Region* samplingRegion, State* to) {
-         ompl::base::ScopedState<> regionCenter(
+        ompl::base::ScopedState<> regionCenter(
                 globalParameters.globalAppBaseControl
                         ->getGeometricComponentStateSpace());
 
-         regionCenter = samplingRegion->state;
-         ompl::base::ScopedState<> fullState =
+        regionCenter = samplingRegion->state;
+        ompl::base::ScopedState<> fullState =
                 globalParameters.globalAppBaseControl
-                        ->getFullStateFromGeometricComponent(
-                                regionCenter);
+                        ->getFullStateFromGeometricComponent(regionCenter);
 
         while (true) {
             fullStateSampler->sampleUniformNear(
@@ -532,17 +505,12 @@ public:
         }
     }
 
-    State* sampleAbstractState(const Region* samplingRegion) {
+    State* sampleAbstractState(const Region* samplingRegion,
+            const double samplingRadius) {
         auto state = abstractSpace->allocState();
-        while (true) {
-            abstractSampler->sampleNear(
-                    state, samplingRegion->state, stateRadius);
+        abstractSampler->sampleNear(state, samplingRegion->state, stateRadius);
 
-            auto sampleHostRegion = findRegion(state);
-            if (sampleHostRegion->id == samplingRegion->id) {
-                break;
-            }
-        }
+        auto sampleHostRegion = findRegion(state);
 
         return state;
     }
@@ -573,6 +541,17 @@ public:
     }
 
     void reached(ompl::base::State* state) {
+        auto region = addStateToClosestRegion(state);
+
+        if (lastSelectedEdge != nullptr &&
+                region->id == lastSelectedEdge->targetRegion->id) {
+            targetSuccess = true;
+        } else {
+            addOutgoingEdgesToOpen(region);
+        }
+    }
+
+    Region* addStateToClosestRegion(State* state) {
         ompl::base::ScopedState<> incomingState(
                 spaceInformation->getStateSpace());
         incomingState = state;
@@ -580,14 +559,17 @@ public:
 
         region->addState(state);
 
-        if (lastSelectedEdge != nullptr &&
-                region->id == lastSelectedEdge->targetRegion->id 
-                //&&!isGoalEdge(lastSelectedEdge)
-				) {
-            targetSuccess = true;
-        } else {
-            addOutgoingEdgesToOpen(region);
-        }
+        return region;
+    }
+
+    Region* allocateRegion(State* state) {
+        return allocateRegion(static_cast<RegionId>(regions.size()), state);
+    }
+
+    Region* allocateRegion(const RegionId id, State* state) {
+        auto region = new Region(id, state);
+        regions.push_back(region);
+        return region;
     }
 
     virtual void generateRegions(const size_t newRegionCount) {
@@ -603,17 +585,16 @@ public:
         for (unsigned int i = currentRegionCount; i < newRegionCount; ++i) {
             auto state = abstractSpace->allocState();
             abstractSampler->sample(state);
-            auto region = new Region(i, state);
-            regions.push_back(region);
+            auto region = allocateRegion(i, state);
             nearestRegions->add(region);
         }
     }
+
     void generateStartGoalRegions() {
         // Add start
         auto startState = abstractSpace->allocState();
         abstractSpace->copyState(startState, abstractStartState);
-        auto startRegion = new Region(startRegionId, startState);
-        regions.push_back(startRegion);
+        auto startRegion = allocateRegion(startRegionId, startState);
         nearestRegions->add(startRegion);
 
         // Add startState to startRegion as a seed for the motion tree
@@ -622,12 +603,11 @@ public:
         // Add goal
         auto goalState = abstractSpace->allocState();
         abstractSpace->copyState(goalState, abstractGoalState);
-        auto goalRegion = new Region(goalRegionId, goalState);
-        regions.push_back(goalRegion);
+        auto goalRegion = allocateRegion(goalRegionId, goalState);
         nearestRegions->add(goalRegion);
     }
 
-    void connectRegions() {
+    void connectAllRegions() {
         clearAllEdges();
 
         for (auto& region : regions) {
@@ -642,13 +622,27 @@ public:
 
     void clearAllEdges() {
         for (auto edge : edges) {
-            delete edge;
+            removeEdge(edge);
         }
 
         edges.clear();
     }
 
+    bool isConnected(IntegratedBeast::Region* sourceRegion,
+            IntegratedBeast::Region* targetRegion) {
+        for (auto outEdge : sourceRegion->outEdges) {
+            if (outEdge->targetRegion->id == targetRegion->id)
+                return true;
+        }
+
+        return false;
+    }
+
     void connectRegions(Region* sourceRegion, Region* targetRegion) {
+        if (isConnected(sourceRegion, targetRegion)) {
+            return; // Already connected
+        }
+
         const auto edgeId = static_cast<const EdgeId>(edges.size());
 
         auto edge = new Edge(static_cast<const EdgeId>(edges.size()),
@@ -663,8 +657,62 @@ public:
         targetRegion->inEdges.push_back(edge);
     }
 
-    void addKNeighbors(Region* sourceRegion, size_t edgeCount) {
+    void disconnectRegion(Region* region) {
+        std::vector<Edge*> inEdges = region->inEdges;
+        std::vector<Edge*> outEdges = region->outEdges;
+
+        for (auto inEdge : inEdges) {
+            disconnectRegions(inEdge->sourceRegion, region);
+            assert(inEdge->targetRegion == region);
+        }
+
+        for (auto outEdge : outEdges) {
+            disconnectRegions(region, outEdge->targetRegion);
+            assert(outEdge->sourceRegion == region);
+        }
+    }
+
+    void disconnectRegions(Region* sourceRegion, Region* targetRegion) {
+        Edge* connectingEdge{nullptr};
+
+        auto& sourceOutEdges = sourceRegion->outEdges;
+
+        for (auto outEdge : sourceOutEdges) {
+            if (outEdge->targetRegion->id == targetRegion->id) {
+                connectingEdge = outEdge;
+                break;
+            }
+        }
+
+        if (connectingEdge == nullptr) {
+            // Regions were not connected
+            return;
+        }
+
+        // Remove edge from source and target
+        std::remove(
+                sourceOutEdges.begin(), sourceOutEdges.end(), connectingEdge);
+
+        auto& targetInEdges = connectingEdge->targetRegion->inEdges;
+        std::remove(targetInEdges.begin(), targetInEdges.end(), connectingEdge);
+    }
+
+    void removeEdge(Edge* edge) {
+        if (edge != nullptr) {
+            auto edgeId = edge->edgeId;
+            edges[edgeId] = nullptr;
+            delete edge;
+        }
+    }
+
+    void addKNeighbors(Region* sourceRegion,
+            size_t edgeCount,
+            bool bidirectional = false) {
         std::vector<Region*> neighbors;
+
+        // Ignore goal region as a source
+        if (goalRegionId == sourceRegion->id)
+            return;
 
         // Add plus one for the current node.
         nearestRegions->nearestK(sourceRegion, edgeCount + 1, neighbors);
@@ -674,8 +722,43 @@ public:
             if (sourceRegion == neighborRegion)
                 continue;
 
+            // Ignore start region as a target
+            if (startRegionId == neighborRegion->id)
+                continue;
+
             connectRegions(sourceRegion, neighborRegion);
+            if (bidirectional) {
+                connectRegions(neighborRegion, sourceRegion);
+            }
         }
+    }
+
+    /**
+     * Steps of region splitting:
+     *
+     * 1. Sample new region around the old region
+     * 2. Redistribute the states
+     * 3.
+     * @param originalRegion
+     */
+    void splitRegion(Region* originalRegion) {
+        auto distanceFunction = nearestRegions->getDistanceFunction();
+
+        double minDistance = std::numeric_limits<double>::max();
+        for (auto outEdge : originalRegion->outEdges) {
+            auto distance =
+                    distanceFunction(originalRegion, outEdge->targetRegion);
+
+            minDistance = std::min(minDistance, distance);
+        }
+
+        auto state =
+                sampleAbstractState(originalRegion, std::max(1.0, minDistance));
+        auto newRegion = allocateRegion(state);
+
+        addKNeighbors(newRegion, neighborEdgeCount, true);
+        nearestRegions->add(newRegion);
+        inconsistentRegions.push(newRegion);
     }
 
     double getInteriorEdgeEffort(Edge* edge) {
@@ -785,14 +868,14 @@ public:
 #ifdef STREAM_GRAPH
     void publishAbstractGraph() {
         //        return;
-        static int counter = -1;
-        ++counter;
-        counter %= 1000;
-        if (counter > 0) {
-            return;
-        }
+        //        static int counter = -1;
+        //        ++counter;
+        //        counter %= 1000;
+        //        if (counter > 0) {
+        //            return;
+        //        }
 
-        std::cout << "Graph test" << std::endl;
+        //        std::cout << "Graph test" << std::endl;
         httplib::Client cli("localhost", 8080, 300, httplib::HttpVersion::v1_1);
 
         std::ostringstream commandBuilder;
@@ -804,19 +887,36 @@ public:
                         ->getStateDimension();
 
         for (auto region : regions) {
+            //            if (region->getTotalTries() == 0 && region->id > 1) {
+            //                continue; // Skip untouched regions
+            //            }
+
             auto vectorState =
                     region->state
                             ->as<ompl::base::CompoundStateSpace::StateType>()
                             ->as<ompl::base::RealVectorStateSpace::StateType>(
                                     0);
 
+            double r = 0;
+            double g = 0;
+            double b = 0;
+            double size = std::max(log(region->getTotalTries()), 2.);
+
+            if (region->id == 0) {
+                r = 1;
+                size = 50;
+            } else if (region->id == 1) {
+                g = 1;
+                size = 50;
+            }
+
             commandBuilder << "{\"" << (region->alreadyVisualized ? "cn" : "an")
                            << "\":{\"" << region->id << "\":{"
                            << R"("label":"g: )" << region->g << "\""
-                           << R"(,"size":2)"
-                           << R"(,"x":)" << vectorState->values[0] * 100
-                           << R"(,"y":)" << vectorState->values[1] * 100
-                           << R"(,"z":)"
+                           << R"(,"size":)" << size << R"(,"r":)" << r
+                           << R"(,"g":)" << g << R"(,"b":)" << b << R"(,"x":)"
+                           << vectorState->values[0] * 100 << R"(,"y":)"
+                           << vectorState->values[1] * 100 << R"(,"z":)"
                            << (dimension == 3 ? vectorState->values[2] * 100 :
                                                 0)
                            << "}}}\r\n";
@@ -824,14 +924,19 @@ public:
         }
 
         for (auto edge : edges) {
+            //            if (edge->alpha + edge->beta == 2) {
+            //                continue; // Skip untouched edges
+            //            }
+
             commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
                            << "\":{\"" << edge << "\":{"
-                           << R"("source":")" << edge->sourceRegionId << "\","
-                           << R"("target":")" << edge->targetRegionId << "\","
+                           << R"("source":")" << edge->sourceRegion->id << "\","
+                           << R"("target":")" << edge->targetRegion->id << "\","
                            << "\"directed\":true,"
                            << R"("label":"Te: )" << edge->totalEffort << "\","
                            << R"("weight":")" << edge->alpha + edge->beta
                            << "\"}}}\r\n";
+
             edge->alreadyVisualized = true;
         }
         commandBuilder << std::endl;
@@ -843,9 +948,9 @@ public:
                 commandString,
                 "plain/text");
 
-        std::cout << res->status << std::endl;
-        std::cout << res->body << std::endl;
-        std::cout << "Graph test end" << std::endl;
+        //        std::cout << res->status << std::endl;
+        //        std::cout << res->body << std::endl;
+        //        std::cout << "Graph test end" << std::endl;
     }
 #endif
 
@@ -897,7 +1002,8 @@ public:
     const unsigned int neighborEdgeCount;
     const unsigned int initialAlpha;
     const unsigned int initialBeta;
-	const unsigned int bonusType;
+    const unsigned int bonusType;
+    const bool useSplit;
 
     ompl::base::State* fullStartState;
     ompl::base::State* fullGoalState;
