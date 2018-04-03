@@ -50,8 +50,5 @@
 *.json
 *.csv
 
-#instance input
-*.inst
-
 #Editor config
 .ycm_extra_conf.py

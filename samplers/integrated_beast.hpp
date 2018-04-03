@@ -243,6 +243,7 @@ public:
             : startRegionId{0},
               goalRegionId{1},
               stateRadius{params.doubleVal("StateRadius")},
+              abstractStateRadius{params.doubleVal("AbstractStateRadius")},
               initialRegionCount{static_cast<const unsigned int>(
                       params.integerVal("RegionCount"))},
               neighborEdgeCount{static_cast<const unsigned int>(
@@ -487,8 +488,6 @@ public:
                 sourceRegionId == goalRegionId) {
             goalRegionSampler->sampleGoal(to);
         } else {
-            // sample near is wrong,  it may not inside boundary,
-            // we need the sampling technique wheeler introduce
             ompl::base::ScopedState<> targetRegionCenter(
                     globalParameters.globalAppBaseControl
                             ->getGeometricComponentStateSpace());
@@ -501,6 +500,8 @@ public:
 
             fullStateSampler->sampleUniformNear(
                     to, fullState.get(), stateRadius);
+			//alternative: rejection sampling
+            //sampleFullState(regions[targetRegionId], to);
         }
 
 #ifdef STREAM_GRAPH
@@ -509,10 +510,32 @@ public:
         return true;
     }
 
+    void sampleFullState(const Region* samplingRegion, State* to) {
+         ompl::base::ScopedState<> regionCenter(
+                globalParameters.globalAppBaseControl
+                        ->getGeometricComponentStateSpace());
+
+         regionCenter = samplingRegion->state;
+         ompl::base::ScopedState<> fullState =
+                globalParameters.globalAppBaseControl
+                        ->getFullStateFromGeometricComponent(
+                                regionCenter);
+
+        while (true) {
+            fullStateSampler->sampleUniformNear(
+                    to, fullState.get(), stateRadius);
+
+            auto sampleHostRegion = findRegion(to);
+            if (sampleHostRegion->id == samplingRegion->id) {
+                break;
+            }
+        }
+    }
+
     State* sampleAbstractState(const Region* samplingRegion) {
         auto state = abstractSpace->allocState();
         while (true) {
-            abstractSampler->sampleUniformNear(
+            abstractSampler->sampleNear(
                     state, samplingRegion->state, stateRadius);
 
             auto sampleHostRegion = findRegion(state);
@@ -553,7 +576,7 @@ public:
         ompl::base::ScopedState<> incomingState(
                 spaceInformation->getStateSpace());
         incomingState = state;
-        auto region = stateToRegionId(incomingState);
+        auto region = findRegion(incomingState);
 
         region->addState(state);
 
@@ -868,6 +891,7 @@ public:
     const RegionId goalRegionId;
 
     const double stateRadius;
+    const double abstractStateRadius;
     const unsigned int initialRegionCount;
     const double resizeFactor;
     const unsigned int neighborEdgeCount;
