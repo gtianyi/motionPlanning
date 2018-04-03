@@ -2,7 +2,6 @@
 
 #include <ompl/base/State.h>
 #include <ompl/base/spaces/RealVectorBounds.h>
-#include "../structs/halton_sequence.hpp"
 
 class HaltonSampler {
 public:
