@@ -118,10 +118,26 @@ public:
                   beta{beta},
                   totalEffort{std::numeric_limits<double>::infinity()},
                   heapIndex{std::numeric_limits<unsigned int>::max()},
-                  interior{false} {}
+				  interior{false} {
+						  //geometricTest();
+				  }
 
         Edge(const Edge&) = delete;
         Edge(Edge&&) = delete;
+
+        void geometricTest() {
+				//TODO bind to geometric inital parameters
+            if (globalParameters.globalAbstractAppBaseGeometric
+                            ->getSpaceInformation()
+                            ->checkMotion(
+                                    sourceRegion->state, targetRegion->state)) {
+                alpha = 10;
+                beta = 1;
+            } else {
+                alpha = 1;
+                beta = 10;
+            }
+		}
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
             // return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
