@@ -43,19 +43,6 @@ public:
 
         static bool pred(const Region* lhs, const Region* rhs) {
             return lhs->key < rhs->key;
-
-            //            const double lhsPrimary = std::min(lhs->g, lhs->rhs);
-            //            const double lhsSecondary = std::min(lhs->g,
-            //            lhs->rhs);
-            //
-            //            const double rhsPrimary = std::min(rhs->g, rhs->rhs);
-            //            const double rhsSecondary = std::min(rhs->g,
-            //            rhs->rhs);
-            //
-            //            if (lhsPrimary == rhsPrimary) {
-            //                return lhsSecondary < rhsSecondary;
-            //            }
-            //            return lhsPrimary < rhsPrimary;
         }
 
         static unsigned int getHeapIndex(const Region* region) {
@@ -84,6 +71,16 @@ public:
             std::push_heap(states.begin(), states.end());
 
             return state.state;
+        }
+
+        int getTotalTries() const {
+            int totalTries = 0;
+
+            for (auto inEdge : inEdges) {
+                totalTries += inEdge->alpha + inEdge->beta - 2;
+            }
+
+            return totalTries;
         }
 
         const ompl::base::State* state;
@@ -126,7 +123,7 @@ public:
         Edge(Edge&&) = delete;
 
         static bool pred(const Edge* lhs, const Edge* rhs) {
-            //return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
+            // return (lhs->totalEffort + lhs->getPenalty()) < (rhs->totalEffort
             //    + rhs->getPenalty());
             if (lhs->totalEffort != rhs->totalEffort) {
                 return lhs->totalEffort < rhs->totalEffort;
