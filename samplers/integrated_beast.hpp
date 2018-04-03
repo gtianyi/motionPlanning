@@ -255,6 +255,7 @@ public:
               bonusType{static_cast<const unsigned int>(
                       params.integerVal("BonusType"))},
               useSplit{params.boolVal("UseSplit")},
+              haltonSampling{params.boolVal("HaltonSampling")},
               fullStartState{nullptr},
               fullGoalState{nullptr},
               abstractStartState{
