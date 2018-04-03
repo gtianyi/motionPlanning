@@ -12,6 +12,7 @@
 #include "../structs/filemap.hpp"
 #include "../structs/inplacebinaryheap.hpp"
 #include "../structs/utils.hpp"
+#include "halton_sampler.hpp"
 
 #ifdef STREAM_GRAPH
 #include "../dependencies/httplib.hpp"
@@ -270,7 +271,8 @@ public:
               nearestRegions{},
               spaceInformation{spaceInformation},
               fullStateSampler{spaceInformation->allocStateSampler()},
-              goalRegionSampler{goalSampleableRegion} {
+              goalRegionSampler{goalSampleableRegion},
+              haltonSampler{globalParameters.abstractBounds} {
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(
                     new ompl::NearestNeighborsGNATNoThreadSafety<Region*>());
@@ -581,7 +583,13 @@ public:
 
         for (unsigned int i = currentRegionCount; i < newRegionCount; ++i) {
             auto state = abstractSpace->allocState();
-            abstractSampler->sample(state);
+            if (haltonSampling) {
+                auto haltonSample = haltonSampler.sampleVector(i);
+                globalParameters.copyVectorToAbstractState(state, haltonSample);
+            } else {
+                abstractSampler->sample(state);
+            }
+
             auto region = allocateRegion(i, state);
             nearestRegions->add(region);
         }
@@ -1001,6 +1009,7 @@ public:
     const unsigned int initialBeta;
     const unsigned int bonusType;
     const bool useSplit;
+    const bool haltonSampling;
 
     ompl::base::State* fullStartState;
     ompl::base::State* fullGoalState;
@@ -1017,6 +1026,8 @@ public:
     ompl::base::ValidStateSamplerPtr abstractSampler;
 
     const ompl::base::GoalSampleableRegion* goalRegionSampler;
+
+    const HaltonSampler haltonSampler;
 
     InPlaceBinaryHeap<Region, Region> inconsistentRegions;
     InPlaceBinaryHeap<Edge, Edge> open;
