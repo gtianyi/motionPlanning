@@ -19,6 +19,14 @@ def start_experiment_notification(experiment_count=None):
 
     send_notification(message)
 
+def start_experiment_notification(experiment_count, Machine):
+    user = getpass.getuser().capitalize()
+
+    message = '{user} just started running {experiment_count} experiments on {machine}.'.format(user=user, experiment_count=experiment_count, machine=Machine)
+
+    send_notification(message)
+
+
 
 def end_experiment_notification():
     user = getpass.getuser().capitalize()
