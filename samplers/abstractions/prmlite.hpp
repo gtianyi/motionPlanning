@@ -7,7 +7,8 @@
 #include <ompl/datastructures/NearestNeighborsSqrtApprox.h>
 #include <ompl/datastructures/NearestNeighborsGNAT.h>
 #include <ompl/datastructures/NearestNeighborsGNATNoThreadSafety.h>
-
+#include "../../structs/filemap.hpp"
+#include <boost/bind.hpp>
 
 class PRMLite : public Abstraction {
 public:
