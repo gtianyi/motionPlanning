@@ -165,7 +165,7 @@ def main():
     progress_bar = tqdm(total=command_queue.qsize())
     workers = create_workers_for_hosts(HOSTS, command_queue, result_queue, progress_bar)
 
-    slack_notification.start_experiment_notification(len(experiments))
+    slack_notification.start_experiment_notification(len(experiments), "ai1-ai15")
 
     # Start workers
     for worker in workers:
