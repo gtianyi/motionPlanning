@@ -34,8 +34,11 @@ protected:
         vertices[1]->state = abstractSpace->allocState();
         abstractSpace->copyState(vertices[1]->state, goal);
         nn->add(vertices[1]);
-
-        const auto dimensions = globalParameters.abstractBounds.low.size();
+		
+		//scott do some spetical thing on bound size see catsetup.hpp:227
+		//and quadrotor.hpp:161
+        const auto dimensions =
+                globalParameters.abstractBounds.low.size() == 6 ? 3 : 2;
         std::vector<double> ranges(dimensions);
         for (int i = 0; i < dimensions; ++i) {
             ranges[i] = globalParameters.abstractBounds.high[i] - globalParameters.abstractBounds.low[i];
