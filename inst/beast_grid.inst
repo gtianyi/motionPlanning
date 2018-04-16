@@ -30,7 +30,7 @@ AgentMesh ? quadrotor.dae
 
 Planner ? BEAST
  
-AbstractionType ? PRM_HALTON
+AbstractionType ? PRM_GRID
 
 NumEdges ? 3
 
