@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/bind.hpp>
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -9,6 +11,7 @@
 #include "SE2RigidBodyPlanning.hpp"
 #include "config.hpp"
 #include "../structs/filemap.hpp"
+#include "../structs/utils.hpp"
 
 class KinematicSpatialGoal : public ompl::base::GoalState {
 public:

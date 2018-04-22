@@ -4,6 +4,7 @@
 #include "ompl/control/planners/PlannerIncludes.h"
 #include "ompl/datastructures/NearestNeighbors.h"
 #include "ompl/tools/config/SelfConfig.h"
+#include <ompl/control/planners/rrt/RRT.h>
 
 #include "../structs/filemap.hpp"
 
@@ -11,7 +12,6 @@
 #include "../samplers/beastsampler_dstar.hpp"
 #include "../samplers/beastsampler_dstarNewBonus.hpp"
 #include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
-#include "../samplers/integrated_beast.hpp"
 
 #include <limits>
 

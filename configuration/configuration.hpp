@@ -28,7 +28,7 @@
 #include "../samplers/beastsampler_dstar.hpp"
 #include "../samplers/beastsampler_dstarNewBonus.hpp"
 #include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
-#include "../samplers/integrated_beast.hpp"
+#include "../samplers/integrated_beast_prm.hpp"
 
 #include "../planners/KPIECE.hpp"
 #include "../planners/RRT.hpp"
@@ -116,9 +116,9 @@ ompl::base::PlannerPtr getPlanner(const BenchmarkData& benchmarkData,
 //                ompl::base::PlannerPtr(new ompl::control::BeastPlanner<
 //                    ompl::base::BeastSampler_dstarNoGeometricTest>(
 //                    spaceInformation, params));
-        } else if (whichSearch.compare("Integrated") == 0) {
+        } else if (whichSearch.compare("IntegratedPRM") == 0) {
             plannerPointer = ompl::base::PlannerPtr(
-                new ompl::control::BeastPlanner<IntegratedBeast>(
+                new ompl::control::BeastPlanner<IntegratedBeastPRM>(
                     spaceInformation, params));
         } else {
             throw ompl::Exception(
