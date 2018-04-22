@@ -24,45 +24,42 @@ using RegionId = unsigned int;
 using EdgeId = unsigned int;
 using State = ompl::base::State;
 
-    IntegratedBeastBase(const ompl::base::SpaceInformation* spaceInformation,
-            const ompl::base::State* start,
-            const ompl::base::GoalPtr& goalPtr,
-            ompl::base::GoalSampleableRegion* goalSampleableRegion,
-            const FileMap& params)
-            : startRegionId{0},
-              goalRegionId{1},
-              stateRadius{params.doubleVal("StateRadius")},
-              initialRegionCount{static_cast<const unsigned int>(
-                      params.integerVal("RegionCount"))},
-              initialAlpha{static_cast<const unsigned int>(
-                      params.integerVal("InitialAlpha"))},
-              initialBeta{static_cast<const unsigned int>(
-                      params.integerVal("InitialBeta"))},
-              bonusType{static_cast<const unsigned int>(
-                      params.integerVal("BonusType"))},
-              useSplit{params.boolVal("UseSplit")},
-              fullStartState{nullptr},
-              fullGoalState{nullptr},
-              abstractStartState{
-                      globalParameters.globalAbstractAppBaseGeometric
-                              ->getProblemDefinition()
-                              ->getStartState(0)},
-              abstractGoalState{globalParameters.globalAbstractAppBaseGeometric
-                                        ->getProblemDefinition()
-                                        ->getGoal()
-                                        ->as<ompl::base::GoalState>()
-                                        ->getState()},
-              regions{},
-              edges{},
-              spaceInformation{spaceInformation},
-              fullStateSampler{spaceInformation->allocStateSampler()},
-              goalRegionSampler{goalSampleableRegion} {
-        fullStartState = spaceInformation->allocState();
-        spaceInformation->copyState(fullStartState, start);
+IntegratedBeastBase(const ompl::base::SpaceInformation* spaceInformation,
+        const ompl::base::State* start,
+        const ompl::base::GoalPtr& goalPtr,
+        ompl::base::GoalSampleableRegion* goalSampleableRegion,
+        const FileMap& params)
+        : stateRadius{params.doubleVal("StateRadius")},
+          initialRegionCount{static_cast<const unsigned int>(
+                  params.integerVal("RegionCount"))},
+          initialAlpha{static_cast<const unsigned int>(
+                  params.integerVal("InitialAlpha"))},
+          initialBeta{static_cast<const unsigned int>(
+                  params.integerVal("InitialBeta"))},
+          bonusType{static_cast<const unsigned int>(
+                  params.integerVal("BonusType"))},
+          useSplit{params.boolVal("UseSplit")},
+          fullStartState{nullptr},
+          fullGoalState{nullptr},
+          abstractStartState{globalParameters.globalAbstractAppBaseGeometric
+                                     ->getProblemDefinition()
+                                     ->getStartState(0)},
+          abstractGoalState{globalParameters.globalAbstractAppBaseGeometric
+                                    ->getProblemDefinition()
+                                    ->getGoal()
+                                    ->as<ompl::base::GoalState>()
+                                    ->getState()},
+          regions{},
+          edges{},
+          spaceInformation{spaceInformation},
+          fullStateSampler{spaceInformation->allocStateSampler()},
+          goalRegionSampler{goalSampleableRegion} {
+    fullStartState = spaceInformation->allocState();
+    spaceInformation->copyState(fullStartState, start);
 
-        fullGoalState = spaceInformation->allocState();
-        spaceInformation->copyState(fullGoalState,
-                goalPtr.get()->as<ompl::base::GoalState>()->getState());
+    fullGoalState = spaceInformation->allocState();
+    spaceInformation->copyState(fullGoalState,
+            goalPtr.get()->as<ompl::base::GoalState>()->getState());
     }
 
     IntegratedBeastBase(const IntegratedBeastBase&) = delete;
@@ -740,9 +737,6 @@ protected:
             inconsistentRegions.push(region);
         }
     }
-
-    const RegionId startRegionId;
-    const RegionId goalRegionId;
 
     const double stateRadius;
     const unsigned int initialRegionCount;

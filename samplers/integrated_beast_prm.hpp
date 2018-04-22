@@ -22,18 +22,20 @@ public:
             const ompl::base::GoalPtr& goalPtr,
             ompl::base::GoalSampleableRegion* goalSampleableRegion,
             const FileMap& params)
-            : abstractStateRadius{params.doubleVal("AbstractStateRadius")},
+            : startRegionId{0},
+              goalRegionId{1},
+              abstractStateRadius{params.doubleVal("AbstractStateRadius")},
               neighborEdgeCount{static_cast<const unsigned int>(
                       params.integerVal("NumEdges"))},
               resizeFactor{params.doubleVal("PRMResizeFactor")},
               haltonSampling{params.boolVal("HaltonSampling")},
               nearestRegions{},
               haltonSampler{globalParameters.abstractBounds},
-			  IntegratedBeastBase(spaceInformation,
-							  start,
-							  goalPtr,
-							  goalSampleableRegion,
-							  params){
+              IntegratedBeastBase(spaceInformation,
+                      start,
+                      goalPtr,
+                      goalSampleableRegion,
+                      params) {
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(
                     new ompl::NearestNeighborsGNATNoThreadSafety<Region*>());
@@ -317,6 +319,9 @@ private:
         Region center(std::numeric_limits<RegionId>::max(), ss.get());
         return nearestRegions->nearest(&center);
     }
+
+    const RegionId startRegionId;
+    const RegionId goalRegionId;
 
     const double abstractStateRadius;
     const double resizeFactor;

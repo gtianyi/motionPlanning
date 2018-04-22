@@ -65,21 +65,13 @@ private:
     };
 
     virtual void initializeRegions(const size_t regionCount) {
-        if (regionCount <= 2) {
-            throw ompl::Exception("IntegratedBeastBase::initializeRegions",
-                    "Region count must be at least 3");
-        }
+        initializeGridParameters(regionCount);
 
-        generateStartGoalRegions();
-		initializeGridParameters(regionCount);
         generateRegions(adjustedRegionCount,gridSize,units);
 
+		bindStartGoalRegions();
+
         connectAllRegions();
-
-        // Remove goal region out edges
-        regions[goalRegionId]->outEdges.clear();
-        regions[startRegionId]->inEdges.clear();
-
 
 #ifdef STREAM_GRAPH
         publishAbstractGraph();
@@ -191,21 +183,16 @@ private:
         return index;
 	}
 
-    void generateStartGoalRegions() {
-        // Add start
-        auto startState = abstractSpace->allocState();
-        abstractSpace->copyState(startState, abstractStartState);
-        auto startRegion = allocateRegion(startRegionId, startState);
-        nearestRegions->add(startRegion);
+    void bindStartGoalRegions() {
+        // bind start region
+        startRegionId = findRegionIndex(abstractStartState);
 
-        // Add startState to startRegion as a seed for the motion tree
+        // Add startState to startRegion as a root for the motion tree
+        auto startRegion = regions[startRegionId];
         startRegion->addState(fullStartState);
 
-        // Add goal
-        auto goalState = abstractSpace->allocState();
-        abstractSpace->copyState(goalState, abstractGoalState);
-        auto goalRegion = allocateRegion(goalRegionId, goalState);
-        nearestRegions->add(goalRegion);
+        // bind goal region
+        goalRegionId = findRegionIndex(abstractGoalState);
     }
 
     virtual void connectAllRegions() {
@@ -313,19 +300,13 @@ private:
         inconsistentRegions.push(newRegion);
     }
 
-    Region* findRegion(State* state) const {
+    int findRegionIndex(const State* state) const {
         Region region(std::numeric_limits<RegionId>::max(), state);
         return nearestRegions->nearest(&region);
     }
 
-    Region* findRegion(const ompl::base::ScopedState<>& s) const {
-        //- 1 is intentional overflow on unsigned int
-        auto ss = globalParameters.globalAppBaseControl
-                          ->getGeometricComponentState(s, -1);
-
-        Region center(std::numeric_limits<RegionId>::max(), ss.get());
-        return nearestRegions->nearest(&center);
-    }
+    RegionId startRegionId;
+    RegionId goalRegionId;
 
     std::vector<std::vector<double>> regionBounds;
 
