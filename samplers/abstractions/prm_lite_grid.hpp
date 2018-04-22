@@ -25,7 +25,14 @@ protected:
                         ->getSpaceInformation()
                         ->allocValidStateSampler();
 
-        vertices.resize(prmSize);
+		//scott do some spetical thing on bound size see catsetup.hpp:227
+		//and quadrotor.hpp:161
+        const auto dimensions =
+                globalParameters.abstractBounds.low.size() == 6 ? 3 : 2;
+        const auto gridSize = (int)ceil(pow((float)prmSize, 1.0 / dimensions));
+        const auto adjustedPRMSize = (int)pow((float)gridSize, dimensions);
+
+        vertices.resize(adjustedPRMSize+2);
 
         // Add start region
         vertices[0] = new Vertex(0);
@@ -38,13 +45,6 @@ protected:
         vertices[1]->state = abstractSpace->allocState();
         abstractSpace->copyState(vertices[1]->state, goal);
         nn->add(vertices[1]);
-
-		//scott do some spetical thing on bound size see catsetup.hpp:227
-		//and quadrotor.hpp:161
-        const auto dimensions =
-                globalParameters.abstractBounds.low.size() == 6 ? 3 : 2;
-        const auto gridSize = (int)ceil(pow((float)prmSize, 1.0 / dimensions));
-        const auto adjustedPRMSize = (int)pow((float)gridSize, dimensions);
 
         std::vector<double> units(dimensions);
         for (int i = 0; i < dimensions; ++i) {
