@@ -1,0 +1,83 @@
+Timeout ? 60 
+
+Memory ? 1000
+
+AddIntermediateStates ? true
+
+Seed ? 2
+
+Runs ? 1
+
+Domain ? Quadrotor
+ 
+PropagationStepSize ? 0.05
+
+MinControlDuration ? 1
+
+MaxControlDuration ? 100
+
+GoalRadius ? 0.1
+
+Start ? 7 15 5
+
+Goal ? -7 -15 5
+
+EnvironmentBounds ? -30 30 -30 30 0 15 
+
+EnvironmentMesh ? fifthelement.dae
+
+AgentMesh ? quadrotor.dae
+
+Planner ? BEAST
+ 
+AbstractionType ? PRM
+
+NumEdges ? 5
+
+PRMSize ? 1000
+
+StateRadius ? 6
+
+WhichSearch ? IntegratedPRM
+
+ValidEdgeDistributionAlpha ? 1
+
+ValidEdgeDistributionBeta ? 1
+
+InvalidEdgeDistributionAlpha ? 1
+
+InvalidEdgeDistributionBeta ? 1
+
+SelectionRadius ? 2.0
+
+PruningRadius ? 1.0
+
+N0 ? 100000
+
+Xi ? 0.5
+
+SSTStyle ? SSTStar
+
+CostPruningStyle ? G
+
+Sampler ? BEAST
+
+Output ? outfile-beast-small
+
+RegionCount ? 1000
+
+InitialAlpha ? 1
+
+InitialBeta ? 1
+
+PRMResizeFactor ? 2
+
+BonusType ? 0
+
+AbstractStateRadius ? 6
+
+UseSplit ? true
+
+HaltonSampling ? false
+
+RejectSampling ? false
