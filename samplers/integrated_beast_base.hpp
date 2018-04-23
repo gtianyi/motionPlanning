@@ -649,10 +649,10 @@ protected:
             double b = 0;
             double size = std::max(log(region->getTotalTries()), 2.);
 
-            if (region->id == 0) {
+            if (region->id == startRegionId) {
                 r = 1;
                 size = 50;
-            } else if (region->id == 1) {
+            } else if (region->id == goalRegionId) {
                 g = 1;
                 size = 50;
             }
@@ -676,7 +676,7 @@ protected:
             //            }
 
             commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
-                           << "\":{\"" << edge << "\":{"
+                           << "\":{\"" << edge->id << "\":{"
                            << R"("source":")" << edge->sourceRegion->id << "\","
                            << R"("target":")" << edge->targetRegion->id << "\","
                            << "\"directed\":true,"
