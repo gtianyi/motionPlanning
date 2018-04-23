@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS} -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3")
 
 set(SOURCE_FILES
+		main.cpp
         domains/acrobot.hpp
         domains/AcrobotPlanning.hpp
         domains/AppBase.hpp
@@ -71,17 +72,21 @@ set(SOURCE_FILES
         samplers/abstractions/abstraction.hpp
         samplers/abstractions/prmlite.hpp
         samplers/abstractions/prm_lite_halton.hpp
-        samplers/abstractionbasedsampler.hpp samplers/integrated_beast.hpp dependencies/httplib.hpp dependencies/catch.hpp configuration/configuration.hpp)
+        samplers/abstractionbasedsampler.hpp 
+		samplers/integrated_beast.hpp 
+		dependencies/httplib.hpp 
+		dependencies/catch.hpp 
+		configuration/configuration.hpp)
 
 set(TEST_FILES
         test/samplers/integrated_beast_test.hpp)
 
 #add_library(OMPL STATIC IMPORTED)
-add_executable(MotionPlanning ${SOURCE_FILES} main.cpp)
-add_executable(MotionPlanningTest ${TEST_FILES} test/test.cpp)
+add_executable(MotionPlanning ${SOURCE_FILES})
+#add_executable(MotionPlanningTest ${TEST_FILES} test/test.cpp)
 
 target_compile_definitions(MotionPlanning PRIVATE IKFAST_NO_MAIN)
-target_compile_definitions(MotionPlanningTest PRIVATE IKFAST_NO_MAIN)
+#target_compile_definitions(MotionPlanningTest PRIVATE IKFAST_NO_MAIN)
 
 #add_definitions(-DSTREAM_GRAPH)
 #target_compile_definitions(MoreMotionPlanning PRIVATE STREAM_GRAPHICS IKFAST_NO_MAIN)
@@ -113,13 +118,13 @@ target_link_libraries(MotionPlanning
         ${LAPACK_LIBRARIES}
         )
 
-target_link_libraries(MotionPlanningTest
-        ${OMPL_LIBRARIES}
-        ${OMPLAPP_LIBRARIES}
-        ${ASSIMP_LIBRARIES}
-        ${FCL_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${LAPACK_LIBRARIES}
-        )
+#target_link_libraries(MotionPlanningTest
+#        ${OMPL_LIBRARIES}
+#        ${OMPLAPP_LIBRARIES}
+#        ${ASSIMP_LIBRARIES}
+#        ${FCL_LIBRARIES}
+#        ${Boost_LIBRARIES}
+#        ${LAPACK_LIBRARIES}
+#        )
 
 
