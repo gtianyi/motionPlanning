@@ -676,7 +676,7 @@ protected:
             //            }
 
             commandBuilder << "{\"" << (edge->alreadyVisualized ? "ce" : "ae")
-                           << "\":{\"" << edge->id << "\":{"
+                           << "\":{\"" << edge->edgeId << "\":{"
                            << R"("source":")" << edge->sourceRegion->id << "\","
                            << R"("target":")" << edge->targetRegion->id << "\","
                            << "\"directed\":true,"
