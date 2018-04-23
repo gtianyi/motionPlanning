@@ -29,6 +29,7 @@
 #include "../samplers/beastsampler_dstarNewBonus.hpp"
 #include "../samplers/beastsampler_dstarNoGeometricTest.hpp"
 #include "../samplers/integrated_beast_prm.hpp"
+#include "../samplers/integrated_beast_grid.hpp"
 
 #include "../planners/KPIECE.hpp"
 #include "../planners/RRT.hpp"
@@ -119,6 +120,10 @@ ompl::base::PlannerPtr getPlanner(const BenchmarkData& benchmarkData,
         } else if (whichSearch.compare("IntegratedPRM") == 0) {
             plannerPointer = ompl::base::PlannerPtr(
                 new ompl::control::BeastPlanner<IntegratedBeastPRM>(
+                    spaceInformation, params));
+        } else if (whichSearch.compare("IntegratedGrid") == 0) {
+            plannerPointer = ompl::base::PlannerPtr(
+                new ompl::control::BeastPlanner<IntegratedBeastGrid>(
                     spaceInformation, params));
         } else {
             throw ompl::Exception(

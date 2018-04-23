@@ -79,24 +79,24 @@ private:
     }
 
     virtual void sampleFullState(const Region* samplingRegion, State* to) {
-			//TODO fix
+        to = spaceInformation->allocState();
+        fullStateSampler->sampleUniform(to);
+
+        std::vector<double> abstractVector(dimensions);
+
+        for (int i = 0, j = 0; i < dimensions; ++i) {
+            abstractVector[i] = randomNumbers.uniformReal(
+                    samplingRegion->bounds[j], samplingRegion->bounds[j+1]);
+			j+=2;
+		}
+
+		copyVectorToFullState(to,abstractVector);
     }
 
-    State* sampleAbstractState(const Region* samplingRegion,
-            const double samplingRadius) {
-        auto state = abstractSpace->allocState();
-        abstractSampler->sampleNear(state, samplingRegion->state, stateRadius);
+    virtual IntegratedBeastBase::Region* addStateToClosestRegion(State* state) {
+        int index = findRegionIndex(state);
 
-        auto sampleHostRegion = findRegion(state);
-
-        return state;
-    }
-
-    virtual Region* addStateToClosestRegion(State* state) {
-        ompl::base::ScopedState<> incomingState(
-                spaceInformation->getStateSpace());
-        incomingState = state;
-        auto region = findRegion(incomingState);
+        auto region =regions[index] ;
 
         region->addState(state);
 
@@ -121,6 +121,13 @@ private:
             units[i] = (globalParameters.abstractBounds.high[i] -
                                globalParameters.abstractBounds.low[i]) /
                     gridSize;
+
+            std::vector<double> bounds;
+            double offset = globalParameters.abstractBounds.low[i];
+            for (int j = 0; j < gridSize; ++j) {
+                bounds.push_back(offset + j * units[i]);
+            }
+            allRegionLowerBounds.push_back(bounds);
         }
     }
 
@@ -146,11 +153,13 @@ private:
         for (int i = 0, j = 0; i < dimensions; i++, j++) {
             regionCenter[i] = offsets[i] + (gridIndices[i] + 0.5) * units[i];
             regionBounds[j] = offsets[i] + gridIndices[i] * units[i];
-            regionBounds[j++] = offsets[i] + (gridIndices[i] + 1) * units[i];
+            regionBounds[++j] = offsets[i] + (gridIndices[i] + 1) * units[i];
         }
 
         auto state = abstractSpace->allocState();
-        globalParameters.copyVectorToAbstractState(state, regionCenter);
+        //globalParameters.copyVectorToAbstractState(state, regionCenter);
+		//abstractSampler->sample(state);
+        copyVectorToAbstractState(state, regionCenter);
 
         auto region = new Region(index, state, regionBounds, gridIndices);
 
@@ -158,7 +167,7 @@ private:
     }
 
     std::vector<unsigned int> getGridIndicesFrom1DIndex(
-            const unsigned int index) {
+            const unsigned int index) const {
         std::vector<unsigned int> gridIndices(dimensions, 0);
 
         unsigned int residualindex = index;
@@ -173,7 +182,7 @@ private:
         return gridIndices;
     }
 
-    int get1DIdexFromGridIndices(std::vector<unsigned int> indices) {
+    int get1DIdexFromGridIndices(std::vector<unsigned int> indices) const {
         int index = 0;
 
         for (int i = 0; i < dimensions; ++i) {
@@ -185,14 +194,14 @@ private:
 
     void bindStartGoalRegions() {
         // bind start region
-        startRegionId = findRegionIndex(abstractStartState);
+        startRegionId = findRegionIndex(fullStartState);
 
         // Add startState to startRegion as a root for the motion tree
         auto startRegion = regions[startRegionId];
         startRegion->addState(fullStartState);
 
         // bind goal region
-        goalRegionId = findRegionIndex(abstractGoalState);
+        goalRegionId = findRegionIndex(fullGoalState);
     }
 
     virtual void connectAllRegions() {
@@ -204,7 +213,8 @@ private:
         }
 
         for (auto& region : regions) {
-            connectToGridNeighbors(region);
+            Region* r = static_cast<Region*>(region);
+            connectToGridNeighbors(r);
         }
     }
 
@@ -229,7 +239,9 @@ private:
 
         for (auto& i : neighborsIndices) {
             int index = get1DIdexFromGridIndices(i);
-			neighbors.push_back(regions[index]);
+			assert(index<regions.size());
+			Region* r= static_cast<Region*>(regions[index]);
+			neighbors.push_back(r);
         }
 		
 		return neighbors;
@@ -240,10 +252,9 @@ private:
         std::vector<std::vector<unsigned int>> neighborsIndices;
 
         for (int i = 0; i < dimensions; ++i) {
-            for (unsigned int j = regionIndices[i] - 1;
-                    j <= regionIndices[i] + 1;
+            for (int j = regionIndices[i] - 1; j <= int(regionIndices[i] + 1);
                     j++) {
-                if (j < 1 || j > gridSize) {
+                if (j < 0 || j >= gridSize) {
                     continue;
                 }
 
@@ -251,8 +262,14 @@ private:
                 std::vector<std::vector<unsigned int>> newNeighborsIndices;
                 for (auto n : neighborsIndices) {
                     std::vector<unsigned int> neighbor = n;
-                    neighbor[i] = j;
-                    if (neighbor != regionIndices) {
+                    neighbor[i] = (unsigned int)j;
+                    if (neighbor != regionIndices &&
+                            std::find(neighborsIndices.begin(),
+                                    neighborsIndices.end(),
+                                    neighbor) == neighborsIndices.end() &&
+                            std::find(newNeighborsIndices.begin(),
+                                    newNeighborsIndices.end(),
+                                    neighbor) == newNeighborsIndices.end()) {
                         newNeighborsIndices.push_back(neighbor);
                     }
                 }
@@ -263,15 +280,31 @@ private:
 
                 // add neighbor for current dimension
                 std::vector<unsigned int> neighbor = regionIndices;
-                neighbor[i] = j;
-                if (neighbor != regionIndices) {
+                neighbor[i] = (unsigned int)j;
+                if (neighbor != regionIndices &&
+                        std::find(neighborsIndices.begin(),
+                                neighborsIndices.end(),
+                                neighbor) == neighborsIndices.end()) {
                     neighborsIndices.push_back(neighbor);
                 }
             }
         }
-		return neighborsIndices;
+        //std::cout << "neighborSize" << neighborsIndices.size() << std::endl;
+        //std::cout << "region:" << std::endl;
+        //printIntVector(regionIndices);
+        //std::cout << "neighbors:" << std::endl;
+        //for (auto i : neighborsIndices) {
+        //    printIntVector(i);
+		//}
+        return neighborsIndices;
 	}
 
+	void printIntVector(const std::vector<unsigned int>& v){
+            for (auto i : v) {
+                std::cout << i << " ";
+			}
+			std::cout<<"\n";
+	}
     /**
      * Steps of region splitting:
      *
@@ -281,38 +314,121 @@ private:
      * @param originalRegion
      */
     virtual void splitRegion(Region* originalRegion) {
-        auto distanceFunction = nearestRegions->getDistanceFunction();
+       // auto distanceFunction = nearestRegions->getDistanceFunction();
 
-        double minDistance = std::numeric_limits<double>::max();
-        for (auto outEdge : originalRegion->outEdges) {
-            auto distance =
-                    distanceFunction(originalRegion, outEdge->targetRegion);
+       // double minDistance = std::numeric_limits<double>::max();
+       // for (auto outEdge : originalRegion->outEdges) {
+       //     auto distance =
+       //             distanceFunction(originalRegion, outEdge->targetRegion);
 
-            minDistance = std::min(minDistance, distance);
-        }
+       //     minDistance = std::min(minDistance, distance);
+       // }
 
-        auto state =
-                sampleAbstractState(originalRegion, std::max(1.0, minDistance));
-        auto newRegion = allocateRegion(state);
+       // auto state =
+       //         sampleAbstractState(originalRegion, std::max(1.0, minDistance));
+       // auto newRegion = allocateRegion(state);
 
-        addKNeighbors(newRegion, neighborEdgeCount, true);
-        nearestRegions->add(newRegion);
-        inconsistentRegions.push(newRegion);
+       // addKNeighbors(newRegion, neighborEdgeCount, true);
+       // nearestRegions->add(newRegion);
+       // inconsistentRegions.push(newRegion);
     }
 
     int findRegionIndex(const State* state) const {
-        Region region(std::numeric_limits<RegionId>::max(), state);
-        return nearestRegions->nearest(&region);
+        std::vector<double> abstractStateVector = getAbstractStateVector(state);
+        std::vector<unsigned int> gridIndices;
+
+        for (int i = 0; i < dimensions; ++i) {
+            int index = getIndexInOneDimension(
+                    abstractStateVector[i], allRegionLowerBounds[i]);
+            assert(index >= 0);
+            assert(index < gridSize);
+            gridIndices.push_back(index);
+        }
+
+        int index = get1DIdexFromGridIndices(gridIndices);
+
+		return index;
     }
 
-    RegionId startRegionId;
-    RegionId goalRegionId;
+    std::vector<double> getAbstractStateVector(const State* state) const {
+        std::vector<double> abstractStateVector;
 
-    std::vector<std::vector<double>> regionBounds;
+        if (dimensions == 2) {
+            auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
+                             ->as<ompl::base::SE2StateSpace::StateType>(0);
+			abstractStateVector.push_back(s->getX());
+			abstractStateVector.push_back(s->getY());
+        } else if (dimensions == 3) {
+            auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
+                             ->as<ompl::base::SE3StateSpace::StateType>(0);
+            abstractStateVector.push_back(s->getX());
+            abstractStateVector.push_back(s->getY());
+            abstractStateVector.push_back(s->getZ());
+        } else {
+            throw ompl::Exception("IntegratedBeastGrid::getAbstractStateVector",
+                    "Not a 2D or 3D abstract space");
+        }
+
+        return abstractStateVector;
+    }
+
+    int getIndexInOneDimension(double target, std::vector<double> nums) const {
+        // binary search
+        int low = 0, high = nums.size() - 1;
+
+        if (target > nums[nums.size() - 1]) {
+            int lastRegionIndex = nums.size() - 1;
+            return lastRegionIndex;
+        }
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (nums[mid] == target)
+                // if on boundry, return the smaller region
+                return mid - 1;
+            if (low == high)
+                return low - 1;
+            if (target > nums[mid])
+                low = mid + 1;
+            else
+                high = mid;
+        }
+    }
+
+    void copyVectorToFullState(State* state, const std::vector<double>& values) {
+        if (dimensions == 2) {
+            auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
+                             ->as<ompl::base::SE2StateSpace::StateType>(0);
+            s->setXY(values[0], values[1]);
+        } else if (dimensions == 3) {
+            auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
+                             ->as<ompl::base::SE3StateSpace::StateType>(0);
+            s->setXYZ(values[0], values[1], values[2]);
+        } else {
+            throw ompl::Exception("IntegratedBeastGrid::copyVectorToState",
+                    "Not a 2D or 3D abstract space");
+        }
+    }
+
+    void copyVectorToAbstractState(State* state,
+            const std::vector<double>& values) {
+        if (dimensions == 2) {
+            auto s = state->as<ompl::base::SE2StateSpace::StateType>();
+            s->setXY(values[0], values[1]);
+        } else if (dimensions == 3) {
+            auto s = state->as<ompl::base::SE3StateSpace::StateType>();
+            s->setXYZ(values[0], values[1], values[2]);
+        } else {
+            throw ompl::Exception("IntegratedBeastGrid::copyVectorToState",
+                    "Not a 2D or 3D abstract space");
+        }
+    }
+    std::vector<std::vector<double>> allRegionLowerBounds;
 
     unsigned int dimensions;
     unsigned int gridSize;
     unsigned int adjustedRegionCount;
     std::vector<double> units;
 
+	ompl::RNG randomNumbers;
 };

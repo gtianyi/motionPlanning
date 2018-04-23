@@ -22,13 +22,12 @@ public:
             const ompl::base::GoalPtr& goalPtr,
             ompl::base::GoalSampleableRegion* goalSampleableRegion,
             const FileMap& params)
-            : startRegionId{0},
-              goalRegionId{1},
-              abstractStateRadius{params.doubleVal("AbstractStateRadius")},
+            : abstractStateRadius{params.doubleVal("AbstractStateRadius")},
               neighborEdgeCount{static_cast<const unsigned int>(
                       params.integerVal("NumEdges"))},
               resizeFactor{params.doubleVal("PRMResizeFactor")},
               haltonSampling{params.boolVal("HaltonSampling")},
+              useRejectSampling{params.boolVal("RejectSampling")},
               nearestRegions{},
               haltonSampler{globalParameters.abstractBounds},
               IntegratedBeastBase(spaceInformation,
@@ -36,6 +35,9 @@ public:
                       goalPtr,
                       goalSampleableRegion,
                       params) {
+        startRegionId = 0;
+        goalRegionId = 1;
+
         if (spaceInformation->getStateSpace()->isMetricSpace()) {
             nearestRegions.reset(
                     new ompl::NearestNeighborsGNATNoThreadSafety<Region*>());
@@ -158,16 +160,22 @@ private:
                 globalParameters.globalAppBaseControl
                         ->getFullStateFromGeometricComponent(regionCenter);
 
-        while (true) {
+        if (useRejectSampling) {
+            while (true) {
+                fullStateSampler->sampleUniformNear(
+                        to, fullState.get(), stateRadius);
+
+                auto sampleHostRegion = findRegion(to);
+                if (sampleHostRegion->id == samplingRegion->id) {
+                    break;
+                }
+            }
+        } else {
             fullStateSampler->sampleUniformNear(
                     to, fullState.get(), stateRadius);
 
-            auto sampleHostRegion = findRegion(to);
-            if (sampleHostRegion->id == samplingRegion->id) {
-                break;
-            }
-        }
-    }
+		}
+   }
 
     State* sampleAbstractState(const Region* samplingRegion,
             const double samplingRadius) {
@@ -320,13 +328,11 @@ private:
         return nearestRegions->nearest(&center);
     }
 
-    const RegionId startRegionId;
-    const RegionId goalRegionId;
-
     const double abstractStateRadius;
     const double resizeFactor;
     const unsigned int neighborEdgeCount;
     const bool haltonSampling;
+	const bool useRejectSampling;
 
     std::unique_ptr<ompl::NearestNeighbors<Region*>> nearestRegions;
 

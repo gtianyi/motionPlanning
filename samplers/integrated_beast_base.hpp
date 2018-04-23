@@ -121,20 +121,7 @@ IntegratedBeastBase(const ompl::base::SpaceInformation* spaceInformation,
                 sourceRegionId == goalRegionId) {
             goalRegionSampler->sampleGoal(to);
         } else {
-            ompl::base::ScopedState<> targetRegionCenter(
-                    globalParameters.globalAppBaseControl
-                            ->getGeometricComponentStateSpace());
-
-            targetRegionCenter = regions[targetRegionId]->state;
-            ompl::base::ScopedState<> fullState =
-                    globalParameters.globalAppBaseControl
-                            ->getFullStateFromGeometricComponent(
-                                    targetRegionCenter);
-
-            fullStateSampler->sampleUniformNear(
-                    to, fullState.get(), stateRadius);
-            // alternative: rejection sampling
-            // sampleFullState(regions[targetRegionId], to);
+            sampleFullState(regions[targetRegionId], to);
         }
 
 #ifdef STREAM_GRAPH
@@ -738,6 +725,9 @@ protected:
         }
     }
 
+    RegionId startRegionId;
+    RegionId goalRegionId;
+ 
     const double stateRadius;
     const unsigned int initialRegionCount;
     const unsigned int initialAlpha;
