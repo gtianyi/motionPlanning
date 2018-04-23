@@ -1,6 +1,12 @@
+#pragma once
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
+
+#include <boost/bind.hpp>
+#include "../structs/utils.hpp"
+#include "../structs/filemap.hpp"
 
 #include <ompl/tools/benchmark/Benchmark.h>
 #include <ompl/base/goals/GoalState.h>
