@@ -3,38 +3,58 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from math import * 
 
+def load_data(*result_files):
+    df = None
 
-df4 = pd.read_json('data-hnb-kcar&dcar-nog.json')
-df2 = pd.read_json('data-hnb-h&q&b-nog.json')
-df3 = pd.read_json('data-h&q&b-nog.json')
-df5 = pd.read_json('data-beast-int-full.json')
-df6 = pd.read_json('data-latest.json')
-df = pd.read_json('data-dcar&kcar-nog.json')
-df = df.append(df2)
-df = df.append(df4)
-df = df.append(df3)
-df = df.append(df5)
-df = df.append(df6)
-#df = pd.read_json('data-23-57-31-03-18.json')
-#df2 = pd.read_json('data-latest.json')
-#df=df.append(df2)
+    for result_file in result_files:
+        if df is None:
+            df = pd.read_json(result_file)
+        else:
+            df2 = pd.read_json(result_file)
+            df = pd.concat([df,df2], axis = 0, ignore_index = True)
+
+    return df
+
+def get_lim(subdf):
+    max=0
+    for alg in subdf.Algorithm.unique():
+        dfa = subdf.loc[subdf['Algorithm'] == alg]
+        quant = dfa.time.quantile(.8)
+        if max < quant:
+            max = quant
+    return max
+
+df = load_data(
+   # 'results/data-all-alloneone.json', 
+#    'results/data-hnb-kcar&dcar-nog.json',
+#    'results/data-hnb-h&q&b-nog.json',
+#    'results/data-h&q&b-nog.json',
+#    'results/data-gust.json',
+#    'results/data-dcar&kcar-nog.json',
+    'results/data-beast-int-split.json',
+    'results/data-beast-int-split500-halton.json',
+    'results/data-beast-int-b1.json', 
+    'results/data-int-grid-kinematic.json',
+    'results/data-int-grid.json')
+
 print(df.columns)
 df = df.loc[:, ['Domain', 'Algorithm', 'time', 'EnvironmentName']]
 
-fig = plt.figure()
+fig = plt.figure(figsize=(10,10))
 count = df.Domain.unique().size
 c = int(ceil(sqrt(count)))
 r = int(ceil(float(count) / float(c)))
-#sns.set(font_scale = 0.8)
 for i, d in enumerate(df.Domain.unique()):
     axcurr = fig.add_subplot(r, c, i + 1)
-    box_plot = sns.boxplot(x='EnvironmentName', y='time', \
-                           hue='Algorithm', ax = axcurr,\
-                           data=df.loc[df['Domain'] == d], \
-                           showmeans = True, meanline = True, \
+    box_plot = sns.boxplot(x='EnvironmentName', y='time', 
+                           hue='Algorithm', ax = axcurr,
+                           data=df.loc[df['Domain'] == d], 
+                           showmeans = True, meanline = True, 
                            notch = True, palette = "Set3")
     box_plot.set_title(d)
     #box_plot.set_ylim(0,df.loc[(df['Domain']==d)&(df['Algorithm']=='BEASTSLOW')].time.quantile(.8))
+    max_y_lim = get_lim(df.loc[df['Domain']==d])
+    box_plot.set_ylim(0, max_y_lim)
     box_plot.set_xlabel('')
     box_plot.set_xticklabels(box_plot.get_xticklabels(), rotation = 17)
     if i + 1 == count:
@@ -42,6 +62,6 @@ for i, d in enumerate(df.Domain.unique()):
     else:
         box_plot.legend_.remove()
 
-plt.tight_layout()
-plt.savefig('int-vs-beast-01.eps')
+# plt.tight_layout()
+plt.savefig('beast-vs-grid.eps')
 # sns.despine(offset=10, trim=True)
