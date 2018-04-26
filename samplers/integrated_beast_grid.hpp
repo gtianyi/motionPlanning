@@ -81,8 +81,8 @@ private:
     virtual void sampleFullState(
             const IntegratedBeastBase::Region* samplingRegion,
             State* to) override {
-        to = spaceInformation->allocState();
-        fullStateSampler->sampleUniform(to);
+        auto sample = spaceInformation->allocState();
+        fullStateSampler->sampleUniform(sample);
 
         const Region* r = static_cast<const Region*>(samplingRegion);
 
@@ -94,13 +94,8 @@ private:
             j += 2;
         }
 
-        copyVectorToFullState(to, abstractVector);
-
-        //std::cout << "target region: ";
-		//printVector(r->gridIndices);
-        //std::cout << "target bounds: ";
-		//printVector(r->bounds);
-		//spaceInformation->printState(to);
+        copyVectorToFullState(sample, abstractVector);
+        spaceInformation->copyState(to, sample);
     }
 
     virtual IntegratedBeastBase::Region* addStateToClosestRegion(
@@ -364,8 +359,6 @@ private:
         std::vector<unsigned int> gridIndices;
 
         for (int i = 0; i < dimensions; ++i) {
-            //int index = getIndexInOneDimension(
-            //        abstractStateVector[i], allRegionLowerBounds[i]);
             int index =
                     (abstractStateVector[i] - abstractLowBounds[i]) / units[i];
             assert(index >= 0);
@@ -384,8 +377,13 @@ private:
         if (dimensions == 2) {
             auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
                              ->as<ompl::base::SE2StateSpace::StateType>(0);
-			abstractStateVector.push_back(s->getX());
-			abstractStateVector.push_back(s->getY());
+
+			if (spaceInformation->getStateDimension()==3){
+				s = state->as<ompl::base::SE2StateSpace::StateType>();
+			}
+
+            abstractStateVector.push_back(s->getX());
+            abstractStateVector.push_back(s->getY());
         } else if (dimensions == 3) {
             auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
                              ->as<ompl::base::SE3StateSpace::StateType>(0);
@@ -400,33 +398,15 @@ private:
         return abstractStateVector;
     }
 
-    int getIndexInOneDimension(double target, std::vector<double> nums) const {
-        // binary search
-        int low = 0, high = nums.size() - 1;
-
-        if (target > nums[nums.size() - 1]) {
-            int lastRegionIndex = nums.size() - 1;
-            return lastRegionIndex;
-        }
-
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            if (nums[mid] == target)
-                // if on boundry, return the smaller region
-                return mid - 1;
-            if (low == high)
-                return low - 1;
-            if (target > nums[mid])
-                low = mid + 1;
-            else
-                high = mid;
-        }
-    }
-
     void copyVectorToFullState(State* state, const std::vector<double>& values) {
         if (dimensions == 2) {
             auto s = state->as<ompl::base::CompoundStateSpace::StateType>()
                              ->as<ompl::base::SE2StateSpace::StateType>(0);
+
+            if (spaceInformation->getStateDimension() == 3) {
+                s = state->as<ompl::base::SE2StateSpace::StateType>();
+			}
+
             s->setXY(values[0], values[1]);
         } else if (dimensions == 3) {
             auto s = state->as<ompl::base::CompoundStateSpace::StateType>()

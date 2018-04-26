@@ -109,6 +109,10 @@ IntegratedBeastBase(const ompl::base::SpaceInformation* spaceInformation,
 
         lastSelectedEdge = open.peek();
         targetSuccess = false;
+		
+		/*std::cout << "open size: " << open.getFill() << std::endl;*/
+		//std::cout << "top id: " << lastSelectedEdge->edgeId << std::endl;
+		//std::cout << "top te: " << lastSelectedEdge->totalEffort << std::endl;
 
         const RegionId sourceRegionId = lastSelectedEdge->sourceRegion->id;
         const RegionId targetRegionId = lastSelectedEdge->targetRegion->id;
