@@ -169,18 +169,18 @@ public:
             // auto s =
             // resusableMotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
             // std::cout << s->getX() << " " << s->getY() << std::endl;
-            // std::cout << "rstate ============ " << std::endl;
-            // s =
-            // rstate->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
-            // std::cout << s->getX() << " " << s->getY() << std::endl;
+			 /*std::cout << "rstate ============ " << std::endl;*/
+			 //auto s=
+			 //rstate->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
+			 //std::cout << s->getX() << " " << s->getY() << std::endl;
 
             /* find closest state in the tree */
             nmotion = nn_->nearest(rmotion);
-// std::cout << "nearest state ============ " << std::endl;
-// s =
-// nmotion->state->as<ompl::base::CompoundStateSpace::StateType>()->as<ompl::base::SE3StateSpace::StateType>(0);
-// std::cout << s->getX() << " " << s->getY() << std::endl;
-// }
+           /* std::cout << "nearest state ============ " << std::endl;*/
+            //s = nmotion->state->as<ompl::base::CompoundStateSpace::StateType>()
+                        //->as<ompl::base::SE3StateSpace::StateType>(0);
+            /*std::cout << s->getX() << " " << s->getY() << std::endl;*/
+        
 
 #ifdef STREAM_GRAPHICS
             streamPoint(rmotion->state, 0, 1, 0, 1);
