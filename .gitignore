@@ -3,6 +3,7 @@
 /cmake-build-debug
 /build_debug 
 /build_release 
+/build_clang 
 /experiments
 /scripts
 /inst
