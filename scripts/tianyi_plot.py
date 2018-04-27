@@ -24,6 +24,25 @@ def get_lim(subdf):
             max = quant
     return max
 
+def calculate_relative_instance_time(df, baseline_algorithm):
+    def add_reference_column(group):
+
+        assert group[group.Algorithm == baseline_algorithm].shape[0] == 1
+        baseline_time = group[group.Algorithm == baseline_algorithm].time.max()
+        group['baseline_time'] = baseline_time
+        return group
+
+    df = df.groupby('instance').apply(add_reference_column)
+    df['relative_time'] = (df.time - df.baseline_time)
+    return df
+
+
+def add_instance_column(df):
+    df['instance'] = df.Domain + '_' + df.Seed.astype(str) + '_' + \
+                     df.AgentMesh + '_' + df.EnvironmentMesh + '_' + \
+                     df.EnvironmentBounds + '_' + df.Start + '_' + df.Goal
+    df.instance = df.instance.str.replace(' ', '#')
+
 df = load_data(
    # 'results/data-all-alloneone.json', 
 #    'results/data-hnb-kcar&dcar-nog.json',
@@ -31,30 +50,34 @@ df = load_data(
 #    'results/data-h&q&b-nog.json',
 #    'results/data-gust.json',
 #    'results/data-dcar&kcar-nog.json',
-    'results/data-beast-int-split.json',
-    'results/data-beast-int-split500-halton.json',
-    'results/data-beast-int-b1.json', 
+    # 'results/data-beast-int-split500-halton.json',
     'results/data-int-grid-kinematic.json',
-    'results/data-int-grid.json')
+    'results/data-int-grid.json',
+    'results/data-beast-int-halton.json', 
+    # 'results/data-beast-int-split.json',
+    'results/data-int-grid-500.json', 
+    'results/data-beast-int-b1.json') 
 
 print(df.columns)
-df = df.loc[:, ['Domain', 'Algorithm', 'time', 'EnvironmentName']]
+# df = df.loc[:, ['Domain', 'Algorithm', 'time', 'EnvironmentName']]
 
-fig = plt.figure(figsize=(10,10))
+add_instance_column(df)
+df = calculate_relative_instance_time(df, 'BEAST_INT')
+
+fig = plt.figure(figsize=(10,12))
 count = df.Domain.unique().size
 c = int(ceil(sqrt(count)))
 r = int(ceil(float(count) / float(c)))
 for i, d in enumerate(df.Domain.unique()):
     axcurr = fig.add_subplot(r, c, i + 1)
-    box_plot = sns.boxplot(x='EnvironmentName', y='time', 
+    box_plot = sns.boxplot(x='EnvironmentName', y='relative_time', 
                            hue='Algorithm', ax = axcurr,
                            data=df.loc[df['Domain'] == d], 
                            showmeans = True, meanline = True, 
                            notch = True, palette = "Set3")
     box_plot.set_title(d)
-    #box_plot.set_ylim(0,df.loc[(df['Domain']==d)&(df['Algorithm']=='BEASTSLOW')].time.quantile(.8))
     max_y_lim = get_lim(df.loc[df['Domain']==d])
-    box_plot.set_ylim(0, max_y_lim)
+    # box_plot.set_ylim(0, max_y_lim)
     box_plot.set_xlabel('')
     box_plot.set_xticklabels(box_plot.get_xticklabels(), rotation = 17)
     if i + 1 == count:
