@@ -44,6 +44,8 @@ void doBenchmarkRun(const BenchmarkData& benchmarkData, const FileMap& params) {
 
     benchmarkData.benchmark->saveResultsToStream();
 
+	std::cout<<globalParameters.solutionStream.propagationInfo<<"\n";
+
     std::cout << std::endl;
 
     // If there were multiple solutions being logged to global parameters,

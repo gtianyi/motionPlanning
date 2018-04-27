@@ -20,6 +20,11 @@ struct SolutionStream {
 		solutions.emplace_back(c, (double)(clock()-start) / CLOCKS_PER_SEC);
 	}
 	std::vector<std::pair<ompl::base::Cost, double>> solutions;
+
+	void addPropString(std::string propString){
+			propagationInfo = propString;
+	}
+    std::string propagationInfo;
 };
 
 struct Timer {

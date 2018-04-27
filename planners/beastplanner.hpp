@@ -272,7 +272,13 @@ public:
                 }
             }
         }
-        std::cout << "propNUM: " << propNum << std::endl;
+		
+		// we will use this in the output, 
+		// probably want to put it somewhere else
+        std::string propInfo = "propNUM INTEGER " + std::to_string(propNum);
+        globalParameters.solutionStream.addPropString(propInfo);
+        //std::cout << propInfo << std::endl;
+
         bool solved = false;
         bool approximate = false;
         if (solution == nullptr) {

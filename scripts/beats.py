@@ -56,6 +56,11 @@ def process_log(log_lines):
         if 'properties for each run' in line:
             save_header = True
 
+        #add by Tianyi
+        if 'propNUM' in line:
+            headers.append(' '.join(line.split()[:-1]))
+            attribute_sets[0].append(line.split()[-1])
+
     result = {}
     for attribute_set in attribute_sets:
         if len(attribute_set) != len(headers):
