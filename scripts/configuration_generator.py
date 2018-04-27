@@ -152,12 +152,12 @@ def seeded_domains():
     base = "{domain}\n" \
            "Seed ? {seed}"
 
-    #domains = dynamic_car_domain() + kinematic_car_domain() + \
-    #      hovercraft_domain() + quadrotor_domain() + blimp_domain()
+    domains = dynamic_car_domain() + kinematic_car_domain() + \
+          hovercraft_domain() + quadrotor_domain() + blimp_domain()
 
-    domains= hovercraft_domain() + quadrotor_domain() + blimp_domain()
+    # domains=kinematic_car_domain()
 
-    seeds = range(5)
+    seeds = range(25)
 
     seeded_domains = []
     for domain in domains:
@@ -172,14 +172,14 @@ def planners():
     #        "WhichSearch ? D*\n"
     #
     # algorithms = ['BEAST', 'BEAST']
-    # beast = "Planner ? BEAST\n" \
-    #         "AbstractionType ? PRM\n" \
-    #         "WhichSearch ? D*\n" \
-    #         'ValidEdgeDistributionAlpha ? 10\n' \
-    #         'ValidEdgeDistributionBeta ? 1\n' \
-    #         'InvalidEdgeDistributionAlpha ? 1\n' \
-    #         'InvalidEdgeDistributionBeta ? 10\n' \
-    #         "Algorithm ? BEAST"
+    #beast = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? D*\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST"
 
     # alloneone = "Planner ? BEAST\n" \
     #                   "AbstractionType ? PRM\n" \
@@ -200,13 +200,22 @@ def planners():
     #                   "Algorithm ? AllOneOne"
 
     # halton = "Planner ? BEAST\n" \
-    #          "AbstractionType ? PRM_HALTON\n" \
-    #          "WhichSearch ? D*NOGEOMETRIC\n" \
-    #          'ValidEdgeDistributionAlpha ? 1\n' \
-    #          'ValidEdgeDistributionBeta ? 1\n' \
-    #          'InvalidEdgeDistributionAlpha ? 1\n' \
-    #          'InvalidEdgeDistributionBeta ? 1\n' \
-    #          "Algorithm ? Halton"
+             # "AbstractionType ? PRM_HALTON\n" \
+             # "WhichSearch ? D*\n" \
+             # 'ValidEdgeDistributionAlpha ? 10\n' \
+             # 'ValidEdgeDistributionBeta ? 1\n' \
+             # 'InvalidEdgeDistributionAlpha ? 1\n' \
+             # 'InvalidEdgeDistributionBeta ? 10\n' \
+             # "Algorithm ? Haltonfix"
+
+    # grid = "Planner ? BEAST\n" \
+            # "AbstractionType ? PRM_GRID\n" \
+            # "WhichSearch ? D*\n" \
+            # 'ValidEdgeDistributionAlpha ? 10\n' \
+            # 'ValidEdgeDistributionBeta ? 1\n' \
+            # 'InvalidEdgeDistributionAlpha ? 1\n' \
+            # 'InvalidEdgeDistributionBeta ? 10\n' \
+            # "Algorithm ? GRID"
 
     # newbonus = "Planner ? BEAST\n" \
     #            "AbstractionType ? PRM\n" \
@@ -239,68 +248,182 @@ def planners():
     #       'Delta ? 0.15\n' \
     #       'UseSplit ? 1\n' \
     #       'Algorithm ? GUST'
-    beast_int_b0 = "Planner ? BEAST\n" \
-            "AbstractionType ? PRM\n" \
-            "WhichSearch ? Integrated\n" \
-            'ValidEdgeDistributionAlpha ? 10\n' \
-            'ValidEdgeDistributionBeta ? 1\n' \
-            'InvalidEdgeDistributionAlpha ? 1\n' \
-            'InvalidEdgeDistributionBeta ? 10\n' \
-            "Algorithm ? BEAST_INT\n" \
-            "RegionCount ? 1000\n" \
-            "InitialAlpha ? 1\n" \
-            "InitialBeta ? 1\n" \
-            "BonusType ? 0\n" 
-    beast_int_b1 = "Planner ? BEAST\n" \
-            "AbstractionType ? PRM\n" \
-            "WhichSearch ? Integrated\n" \
-            'ValidEdgeDistributionAlpha ? 10\n' \
-            'ValidEdgeDistributionBeta ? 1\n' \
-            'InvalidEdgeDistributionAlpha ? 1\n' \
-            'InvalidEdgeDistributionBeta ? 10\n' \
-            "Algorithm ? BEAST_INT\n" \
-            "RegionCount ? 1000\n" \
-            "InitialAlpha ? 1\n" \
-            "InitialBeta ? 1\n" \
-            "BonusType ? 1\n" 
-    beast_int_b2 = "Planner ? BEAST\n" \
-            "AbstractionType ? PRM\n" \
-            "WhichSearch ? Integrated\n" \
-            'ValidEdgeDistributionAlpha ? 10\n' \
-            'ValidEdgeDistributionBeta ? 1\n' \
-            'InvalidEdgeDistributionAlpha ? 1\n' \
-            'InvalidEdgeDistributionBeta ? 10\n' \
-            "Algorithm ? BEAST_INT\n" \
-            "RegionCount ? 1000\n" \
-            "InitialAlpha ? 1\n" \
-            "InitialBeta ? 1\n" \
-            "BonusType ? 2\n" 
-    beast_int_b3 = "Planner ? BEAST\n" \
-            "AbstractionType ? PRM\n" \
-            "WhichSearch ? Integrated\n" \
-            'ValidEdgeDistributionAlpha ? 10\n' \
-            'ValidEdgeDistributionBeta ? 1\n' \
-            'InvalidEdgeDistributionAlpha ? 1\n' \
-            'InvalidEdgeDistributionBeta ? 10\n' \
-            "Algorithm ? BEAST_INT\n" \
-            "RegionCount ? 1000\n" \
-            "InitialAlpha ? 1\n" \
-            "InitialBeta ? 1\n" \
-            "BonusType ? 3\n" 
-    #beast_slo = "Planner ? BEAST\n" \
+    #beast_int_b0 = "Planner ? BEAST\n" \
     #        "AbstractionType ? PRM\n" \
-    #        "WhichSearch ? D*\n" \
+    #        "WhichSearch ? Integrated\n" \
     #        'ValidEdgeDistributionAlpha ? 10\n' \
     #        'ValidEdgeDistributionBeta ? 1\n' \
     #        'InvalidEdgeDistributionAlpha ? 1\n' \
     #        'InvalidEdgeDistributionBeta ? 10\n' \
-    #        "Algorithm ? BEASTSLOW"
+    #        "Algorithm ? BEAST_INT\n" \
+    #        "RegionCount ? 1000\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 0\n" \
+    #        "HaltonSampling ? false\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? false\n" 
+    #beast_int_b1 = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? Integrated\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST_INT\n" \
+    #        "RegionCount ? 1000\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 1\n" \
+    #        "HaltonSampling ? false\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? false\n" 
+    #beast_int_b2 = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? Integrated\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST_INT\n" \
+    #        "RegionCount ? 1000\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 2\n" \
+    #        "HaltonSampling ? false\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? false\n" 
+    #beast_int_b3 = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? Integrated\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST_INT\n" \
+    #        "RegionCount ? 1000\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 3\n" \
+    #        "HaltonSampling ? false\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? false\n" 
+    #beast_split = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? Integrated\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST-INT-SPLIT-500\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? true\n" \
+    #        "RegionCount ? 500\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 0\n"\
+    #        "HaltonSampling ? false\n"
 
+    #beast_split_halton = "Planner ? BEAST\n" \
+    #        "AbstractionType ? PRM\n" \
+    #        "WhichSearch ? Integrated\n" \
+    #        'ValidEdgeDistributionAlpha ? 10\n' \
+    #        'ValidEdgeDistributionBeta ? 1\n' \
+    #        'InvalidEdgeDistributionAlpha ? 1\n' \
+    #        'InvalidEdgeDistributionBeta ? 10\n' \
+    #        "Algorithm ? BEAST-INT-SPLIT-HALTON\n" \
+    #        "AbstractStateRadius ? 6\n" \
+    #        "UseSplit ? true\n" \
+    #        "RegionCount ? 1000\n" \
+    #        "InitialAlpha ? 1\n" \
+    #        "InitialBeta ? 1\n" \
+    #        "BonusType ? 0\n"\
+    #        "HaltonSampling ? true\n"
 
+    beast_grid = "Planner ? BEAST\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? IntegratedGrid\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           "Algorithm ? BEAST-INT-Grid\n" \
+           "AbstractStateRadius ? 6\n" \
+           "UseSplit ? false\n" \
+           "RegionCount ? 1000\n" \
+           "InitialAlpha ? 1\n" \
+           "InitialBeta ? 1\n" \
+           "BonusType ? 0\n"\
+
+    beast_int = "Planner ? BEAST\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? IntegratedPRM\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           "Algorithm ? BEAST-INT\n" \
+           "AbstractStateRadius ? 6\n" \
+           "UseSplit ? false\n" \
+           "RegionCount ? 1000\n" \
+           "InitialAlpha ? 1\n" \
+           "InitialBeta ? 1\n" \
+           "BonusType ? 0\n"\
+           "HaltonSampling ? false\n"\
+           "RejectSampling ? false\n"
+
+    beast_halton = "Planner ? BEAST\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? IntegratedPRM\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           "Algorithm ? BEAST-INT-Halton\n" \
+           "AbstractStateRadius ? 6\n" \
+           "UseSplit ? false\n" \
+           "RegionCount ? 1000\n" \
+           "InitialAlpha ? 1\n" \
+           "InitialBeta ? 1\n" \
+           "BonusType ? 0\n"\
+           "HaltonSampling ? true\n"\
+           "RejectSampling ? false\n"
+
+    beast_split = "Planner ? BEAST\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? IntegratedPRM\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           "Algorithm ? BEAST-INT-SPLIT\n" \
+           "AbstractStateRadius ? 6\n" \
+           "UseSplit ? true\n" \
+           "RegionCount ? 1000\n" \
+           "InitialAlpha ? 1\n" \
+           "InitialBeta ? 1\n" \
+           "BonusType ? 0\n"\
+           "HaltonSampling ? false\n"\
+           "RejectSampling ? false\n"
+
+    beast_grid_500 = "Planner ? BEAST\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? IntegratedGrid\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           "Algorithm ? BEAST-INT-Grid-500\n" \
+           "AbstractStateRadius ? 6\n" \
+           "UseSplit ? false\n" \
+           "RegionCount ? 500\n" \
+           "InitialAlpha ? 1\n" \
+           "InitialBeta ? 1\n" \
+           "BonusType ? 0\n"\
 
     # return [base.format(planner=planner) for planner in algorithms] + [halton]
 #return [nogeometric, halton, newbonus, beast]
-    return [beast_int_b0, beast_int_b1, beast_int_b2, beast_int_b3]
+    return [beast_grid, beast_int, beast_halton] 
 
 
 def generate_configurations():

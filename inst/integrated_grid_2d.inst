@@ -8,7 +8,7 @@ Seed ? 2
 
 Runs ? 1
 
-Domain ? DynamicCar
+Domain ? KinematicCar
  
 PropagationStepSize ? 0.05
 
@@ -52,17 +52,9 @@ SelectionRadius ? 2.0
 
 PruningRadius ? 1.0
 
-N0 ? 100000
-
-Xi ? 0.5
-
-SSTStyle ? SSTStar
-
-CostPruningStyle ? G
-
 Sampler ? BEAST
 
-Output ? outfile-beast-small
+Output ? outfile-grid-small
 
 RegionCount ? 1000
 
