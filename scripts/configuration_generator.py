@@ -49,6 +49,23 @@ def wall_environment():
     return [base.format(start_goal_pair=start_goal_pair) for start_goal_pair in start_goal_pairs]
 
 
+def wall_narrow_environment():
+    base = 'EnvironmentMesh ? single-wall-narrow.dae\n' \
+           '{start_goal_pair}\n' \
+           'EnvironmentBounds ? -15 15 -15 15\n' \
+           'EnvironmentName ? single-wall\n'
+
+    start_goal_pairs = [
+        "Start ? -13 -12 \nGoal ? -13 13",
+        "Start ? -13 -13 \nGoal ? -12 10",
+        "Start ? -13 -11 \nGoal ? -10 10",
+        "Start ? -10 -12 \nGoal ? -13 13",
+        "Start ? -5 -12 \nGoal ? -13 13",
+    ]
+
+    return [base.format(start_goal_pair=start_goal_pair) for start_goal_pair in start_goal_pairs]
+
+
 def empty_environment():
     base = 'EnvironmentMesh ? single-wall.dae\n' \
            '{start_goal_pair}\n' \
@@ -103,6 +120,7 @@ def dynamic_car_domain():
            "AgentMesh ? car2_planar_robot.dae\n" \
            "{environment}\n"
 
+    # environments = wall_narrow_environment()
     environments = forest_environment() + ladder_environment() + empty_environment()
 
     return [base.format(environment=environment) for environment in environments]
@@ -114,6 +132,7 @@ def kinematic_car_domain():
            "{environment}\n"
 
     environments = forest_environment() + ladder_environment() + empty_environment()
+    # environments = wall_narrow_environment()
 
     return [base.format(environment=environment) for environment in environments]
 
@@ -124,6 +143,7 @@ def hovercraft_domain():
            "{environment}\n"
 
     environments = forest_environment() + ladder_environment() + empty_environment()
+    # environments = wall_narrow_environment()
 
     return [base.format(environment=environment) for environment in environments]
 
@@ -152,12 +172,12 @@ def seeded_domains():
     base = "{domain}\n" \
            "Seed ? {seed}"
 
-    domains = dynamic_car_domain() + kinematic_car_domain() + \
-          hovercraft_domain() + quadrotor_domain() + blimp_domain()
+    # domains = dynamic_car_domain() + kinematic_car_domain() + \
+          # hovercraft_domain() + quadrotor_domain() + blimp_domain()
 
-    # domains=kinematic_car_domain()
+    domains=dynamic_car_domain() + kinematic_car_domain() + hovercraft_domain() 
 
-    seeds = range(25)
+    seeds = range(10)
 
     seeded_domains = []
     for domain in domains:
@@ -167,6 +187,40 @@ def seeded_domains():
 
 
 def planners():
+
+    pprm = "Planner ? PlakuRRT\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? D*\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           'Alpha ? 0.5\n' \
+           'B ? 0.85\n' \
+           "Algorithm ? PPRM"
+
+    beats = "Planner ? BEATS\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? D*\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           'ImportantSampling ? FALSE\n' \
+           'ImportantSampleWeight ? 0.5\n' \
+           "Algorithm ? BeaTS"
+
+    beats_imp = "Planner ? BEATS\n" \
+           "AbstractionType ? PRM\n" \
+           "WhichSearch ? D*\n" \
+           'ValidEdgeDistributionAlpha ? 10\n' \
+           'ValidEdgeDistributionBeta ? 1\n' \
+           'InvalidEdgeDistributionAlpha ? 1\n' \
+           'InvalidEdgeDistributionBeta ? 10\n' \
+           'ImportantSampling ? TRUE\n' \
+           'ImportantSampleWeight ? 0.5\n' \
+           "Algorithm ? BeaTS-IMP"
+
     # base = "Planner ? {planner}\n" \
     #        "AbstractionType ? PRM\n" \
     #        "WhichSearch ? D*\n"
@@ -423,7 +477,7 @@ def planners():
 
     # return [base.format(planner=planner) for planner in algorithms] + [halton]
 #return [nogeometric, halton, newbonus, beast]
-    return [beast_grid, beast_int, beast_halton] 
+    return [beats, beats_imp] 
 
 
 def generate_configurations():

@@ -47,22 +47,28 @@ df = load_data(
    # 'results/data-all-alloneone.json', 
 #    'results/data-hnb-kcar&dcar-nog.json',
 #    'results/data-hnb-h&q&b-nog.json',
-#    'results/data-h&q&b-nog.json',
-#    'results/data-gust.json',
-#    'results/data-dcar&kcar-nog.json',
     # 'results/data-beast-int-split500-halton.json',
-    'results/data-int-grid-kinematic.json',
-    'results/data-int-grid.json',
-    'results/data-beast-int-halton.json', 
+    # 'results/data-int-grid-kinematic.json',
+    # 'results/data-int-grid.json',
+    # 'results/data-beast-int-halton.json', 
     # 'results/data-beast-int-split.json',
-    'results/data-int-grid-500.json', 
+    # 'results/data-int-grid-500.json', 
+    'results/data-beats-beatsimp.json', 
     'results/data-beast-int-b1.json') 
+    # 'results/data-gust.json',
+    # 'results/data-pprm.json',
+    # 'results/data-h&q&b-nog.json',
+    # 'results/data-dcar&kcar-nog.json')
+    # 'results/data-singlewallnarrow-int-g-mod.json', 
+    # 'results/data-singlewall-int-g.json') 
 
 print(df.columns)
 # df = df.loc[:, ['Domain', 'Algorithm', 'time', 'EnvironmentName']]
 
 add_instance_column(df)
 df = calculate_relative_instance_time(df, 'BEAST_INT')
+
+df=df.loc[(df['Domain']!='Quadrotor')&(df['Domain']!='Blimp')]
 
 fig = plt.figure(figsize=(10,12))
 count = df.Domain.unique().size
@@ -86,5 +92,5 @@ for i, d in enumerate(df.Domain.unique()):
         box_plot.legend_.remove()
 
 # plt.tight_layout()
-plt.savefig('beast-vs-grid.eps')
+plt.savefig('gust-pprm.eps')
 # sns.despine(offset=10, trim=True)

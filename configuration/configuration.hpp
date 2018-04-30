@@ -92,9 +92,9 @@ ompl::base::PlannerPtr getPlanner(const BenchmarkData& benchmarkData,
 //    } else if (planner.compare("FBiasedShellRRT") == 0) {
 //        plannerPointer = ompl::base::PlannerPtr(
 //            new ompl::control::FBiasedShellRRT(spaceInformation, params));
-//    } else if (planner.compare("PlakuRRT") == 0) {
-//        plannerPointer = ompl::base::PlannerPtr(
-//            new ompl::control::PlakuRRT(spaceInformation, params));
+	} else if (planner.compare("PlakuRRT") == 0) {
+		plannerPointer = ompl::base::PlannerPtr(
+			new ompl::control::PlakuRRT(spaceInformation, params));
     } else if (planner.compare("BEAST") == 0) {
         auto whichSearch = params.stringVal("WhichSearch");
         if (whichSearch.compare("D*") == 0) {
